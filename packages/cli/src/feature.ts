@@ -28,9 +28,27 @@ export async function runFeature(context: CommandContext): Promise<unknown> {
     const provider = await selectProvider(config.ai.preferredProviders, options.provider, config.ai.models, config.ai.defaultModel);
     // §8 — the mesh routes each step to the best candidate for its task type;
     // the session provider stays the explicit fallback.
-    const { buildMesh, selectForTask } = await import("./mesh.js");
+    const { buildMesh, selectForTask, meteredProvider, appendLedger, ledgerCost } = await import("./mesh.js");
     const loadedMesh = config.mesh ? await buildMesh(context.cwd, config.mesh) : null;
     const stepProviders: Record<string, string> = {};
+    const ledgerEntries: Array<import("./mesh.js").LedgerEntry> = [];
+    // Real usage + latency per routed step; verification settles later via
+    // `ostack mesh settle <runId>` against the run's evidence pack.
+    const metered = async <T>(stepId: string, taskType: string, selection: Awaited<ReturnType<typeof selectForTask>>, runId: string, work: (provider: typeof selection.provider) => Promise<T>): Promise<T> => {
+      stepProviders[stepId] = selection.candidateId ?? selection.provider.id;
+      if (!selection.candidateId || !loadedMesh) return work(selection.provider);
+      const usage = { inputTokens: 0, outputTokens: 0, calls: 0 };
+      const started = performance.now();
+      const result = await work(meteredProvider(selection.provider, usage));
+      const costUsd = ledgerCost(loadedMesh, selection.candidateId, usage);
+      ledgerEntries.push({
+        runId, stepId, taskType, candidateId: selection.candidateId,
+        latencyMs: Math.round(performance.now() - started),
+        ...(costUsd !== undefined ? { costUsd } : {}),
+        usage
+      });
+      return result;
+    };
     const [workflow, agents, freshDiscovery] = await Promise.all([loadWorkflow(), loadAgents(), existingRun ? Promise.resolve(undefined) : discoverProject(context.cwd)]);
     const approvals = buildApprovals(options, existingRun);
     const events = new EventBus();
@@ -53,14 +71,14 @@ export async function runFeature(context: CommandContext): Promise<unknown> {
         if (step.command === "intent:compile") {
           const steps = await import("./feature-steps.js");
           const selection = await selectForTask(loadedMesh, "intent_drafting", provider);
-          stepProviders[step.id] = selection.candidateId ?? selection.provider.id;
-          return steps.executeIntentStep(context.cwd, config.project.id, effectiveObjective, selection.provider, options.intent);
+          return metered(step.id, "intent_drafting", selection, currentRun.id, (metered_) =>
+            steps.executeIntentStep(context.cwd, config.project.id, effectiveObjective, metered_, options.intent));
         }
         if (step.command === "deliberation:challenge") {
           const steps = await import("./feature-steps.js");
           const selection = await selectForTask(loadedMesh, "deliberation", provider);
-          stepProviders[step.id] = selection.candidateId ?? selection.provider.id;
-          return steps.executeChallengeStep(context.cwd, currentRun, effectiveObjective, selection.provider);
+          return metered(step.id, "deliberation", selection, currentRun.id, (metered_) =>
+            steps.executeChallengeStep(context.cwd, currentRun, effectiveObjective, metered_));
         }
         if (step.command === "evidence:scaffold") {
           const steps = await import("./feature-steps.js");
@@ -75,16 +93,17 @@ export async function runFeature(context: CommandContext): Promise<unknown> {
       const agent = agents.find((item) => item.id === step.agent);
       if (!agent) throw new Error(`Agent not found: ${step.agent}`);
       const selection = await selectForTask(loadedMesh, agent.category, provider);
-      stepProviders[step.id] = selection.candidateId ?? selection.provider.id;
-      const orchestrator = new AgentOrchestrator([agent], new DefaultAgentRunner(), events);
-      const results = await orchestrator.execute({
-        id: `${currentRun.id}:${step.id}`,
-        objective: `${step.name}\n\nFeature request: ${effectiveObjective}`,
-        context: { project: config.project, discovery: summarizeDiscovery(discovery), previousOutputs: compactOutputs(currentRun.outputs) },
-        requiredCapabilities: [agent.category],
-        securityLevel: step.securityLevel
-      }, selection.provider);
-      return orchestrator.aggregate(results);
+      return metered(step.id, agent.category, selection, currentRun.id, async (metered_) => {
+        const orchestrator = new AgentOrchestrator([agent], new DefaultAgentRunner(), events);
+        const results = await orchestrator.execute({
+          id: `${currentRun.id}:${step.id}`,
+          objective: `${step.name}\n\nFeature request: ${effectiveObjective}`,
+          context: { project: config.project, discovery: summarizeDiscovery(discovery), previousOutputs: compactOutputs(currentRun.outputs) },
+          requiredCapabilities: [agent.category],
+          securityLevel: step.securityLevel
+        }, metered_);
+        return orchestrator.aggregate(results);
+      });
     }, {
       ...(approvals.length ? { approvals } : {}),
       ...(baseRun ? { existingRun: baseRun } : {}),
@@ -95,6 +114,7 @@ export async function runFeature(context: CommandContext): Promise<unknown> {
       }
     });
 
+    await appendLedger(context.cwd, ledgerEntries);
     return summarizeRun(run, provider.id, loadedMesh ? stepProviders : undefined);
   } finally { repository.close(); }
 }

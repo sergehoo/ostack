@@ -1,11 +1,72 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "rootDir": "src", "outDir": "dist" },
-  "include": ["src/**/*.ts"],
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
   "references": [
-    { "path": "../core" }, { "path": "../providers" }, { "path": "../sqlite" },
-    { "path": "../discovery" }, { "path": "../validation" },
-    { "path": "../changes" }, { "path": "../quality" }, { "path": "../evidence" }, { "path": "../intent" }, { "path": "../graph" }, { "path": "../twin" },
-    { "path": "../deliberation" }, { "path": "../observe" }, { "path": "../security-lab" }, { "path": "../mesh" }, { "path": "../benchmark" }, { "path": "../domain" }
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../providers"
+    },
+    {
+      "path": "../sqlite"
+    },
+    {
+      "path": "../discovery"
+    },
+    {
+      "path": "../validation"
+    },
+    {
+      "path": "../changes"
+    },
+    {
+      "path": "../quality"
+    },
+    {
+      "path": "../evidence"
+    },
+    {
+      "path": "../intent"
+    },
+    {
+      "path": "../graph"
+    },
+    {
+      "path": "../twin"
+    },
+    {
+      "path": "../deliberation"
+    },
+    {
+      "path": "../observe"
+    },
+    {
+      "path": "../security-lab"
+    },
+    {
+      "path": "../mesh"
+    },
+    {
+      "path": "../benchmark"
+    },
+    {
+      "path": "../domain"
+    },
+    {
+      "path": "../architecture"
+    },
+    {
+      "path": "../diagnosis"
+    },
+    {
+      "path": "../decisions"
+    }
   ]
 }

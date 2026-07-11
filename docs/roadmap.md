@@ -16,7 +16,9 @@ Livré : adaptateurs OpenAI/Anthropic/Ollama, stockage SQLite, checkpoints/repri
 
 Également livré : couche Universal Domain Intelligence (`@ostack/domain` + commande `domain`) — ontologie universelle, Domain Packs sourcés (schéma + exemple crédit CI), score de compréhension calculé, maturité 0-4 avec blocage des actions critiques, moteur de règles (une règle non confirmée escalade vers un humain, jamais de blocage ou passage silencieux), tables de décision (conflits et cas non couverts détectés), garde de juridiction, scénarios de tests générés et analyse interdomaines.
 
-Reporté à M2 : génération de plans par sorties structurées, sandbox OS/conteneur durcie, branchement automatique au workflow après validation humaine, pipeline d'extraction métier assisté par modèle, process mining, simulation métier, Universal Domain Center Web et marketplace de Domain Packs.
+Également livré : boucle de vérification autonome (`@ostack/loop`, budgets durs + détection répétition/oscillation), Performance Intelligence baseline/compare (`ostack performance`), Architecture Intelligence (`ostack architecture check`, appliquée à OStack lui-même), analyse de cause racine structurée (`ostack root-cause`), mémoire des décisions avec masquage de secrets (`ostack decision`), et compteur de coûts réels du Model Mesh (ledger + `ostack mesh settle`). Pilote BestÉpargne exécuté de bout en bout avec le fournisseur Ollama local (llama3.2:3b) : intention compilée, agents réels, délibération contradictoire réelle (défi bloquant détecté), squelette de preuve honnête.
+
+Reporté à M2 : commande de correction *entièrement autonome* (exige la sandbox de mutation durcie), génération de plans par sorties structurées, sandbox OS/conteneur durcie, pipeline d'extraction métier assisté par modèle, process mining, simulation métier, Universal Domain Center Web et marketplace de Domain Packs.
 
 ## M2 — Team preview
 

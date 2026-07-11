@@ -2,7 +2,9 @@
   "name": "@ostack/cli",
   "version": "0.1.0",
   "type": "module",
-  "bin": { "ostack": "dist/bin.js" },
+  "bin": {
+    "ostack": "dist/bin.js"
+  },
   "dependencies": {
     "@ostack/core": "0.1.0",
     "@ostack/changes": "0.1.0",
@@ -20,6 +22,9 @@
     "@ostack/providers": "0.1.0",
     "@ostack/sqlite": "0.1.0",
     "@ostack/validation": "0.1.0",
-    "@ostack/quality": "0.1.0"
+    "@ostack/quality": "0.1.0",
+    "@ostack/architecture": "0.1.0",
+    "@ostack/diagnosis": "0.1.0",
+    "@ostack/decisions": "0.1.0"
   }
 }

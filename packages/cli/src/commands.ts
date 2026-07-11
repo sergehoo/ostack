@@ -24,7 +24,12 @@ export const commands: Record<string, { description: string; handler: CommandHan
   feature: { description: "Concevoir et développer une fonctionnalité", handler: async (context) => (await import("./feature.js")).runFeature(context) },
   bug: { description: "Diagnostiquer et corriger un défaut", handler: notYetAutomated("bug", "bug-resolution") },
   audit: { description: "Lancer un audit transverse", handler: notYetAutomated("audit", "quality-gate") },
-  architecture: { description: "Produire ou réviser l’architecture", handler: notYetAutomated("architecture", "architecture-review") },
+  architecture: {
+    description: "Vérifier les frontières d’architecture (check) ou réviser l’architecture",
+    handler: async (context) => context.args[0] === "check"
+      ? (await import("./architecture.js")).runArchitectureCheck({ ...context, args: context.args.slice(1) })
+      : notYetAutomated("architecture", "architecture-review")(context)
+  },
   design: { description: "Concevoir l’expérience et l’interface", handler: notYetAutomated("design", "design-review") },
   security: { description: "Lancer l’audit de sécurité", handler: notYetAutomated("security", "security-audit") },
   qa: { description: "Exécuter l’assurance qualité", handler: notYetAutomated("qa", "quality-gate") },
@@ -43,6 +48,9 @@ export const commands: Record<string, { description: string; handler: CommandHan
   mesh: { description: "Afficher le routage des modèles et enregistrer des résultats vérifiés", handler: async (context) => (await import("./mesh.js")).runMeshCommand(context) },
   benchmark: { description: "Exécuter la suite de benchmark et mesurer la stabilité", handler: async (context) => (await import("./benchmark.js")).runBenchmarkCommand(context) },
   domain: { description: "Créer, scorer, valider et interroger les Domain Packs métier", handler: async (context) => (await import("./domain.js")).runDomain(context) },
+  performance: { description: "Établir une baseline de performance et détecter les régressions", handler: async (context) => (await import("./performance.js")).runPerformance(context) },
+  "root-cause": { description: "Analyse de cause racine structurée sur le journal d’audit", handler: async (context) => (await import("./diagnosis.js")).runRootCause(context) },
+  decision: { description: "Mémoire des décisions d’ingénierie (record, search)", handler: async (context) => (await import("./decisions.js")).runDecision(context) },
   update: { description: "Vérifier et appliquer une mise à jour OStack", handler: notYetAutomated("update", "self-update") }
 };
 

@@ -8,6 +8,14 @@ export interface ModelCandidate {
   provider: string;
   model: string;
   local: boolean;
+  pricing?: { inputPerMTokenUsd: number; outputPerMTokenUsd: number };
+}
+
+// Real cost from real token usage; without pricing the cost is UNKNOWN — the
+// caller must not substitute zero, which would fake the central metric.
+export function estimateCostUsd(candidate: ModelCandidate, usage: { inputTokens: number; outputTokens: number }): number | undefined {
+  if (!candidate.pricing) return undefined;
+  return (usage.inputTokens * candidate.pricing.inputPerMTokenUsd + usage.outputTokens * candidate.pricing.outputPerMTokenUsd) / 1_000_000;
 }
 
 export type RoutingStrategy =
@@ -25,7 +33,7 @@ export interface TaskRoute {
 
 export interface Outcome {
   verified: boolean;
-  costUsd: number;
+  costUsd?: number;
   latencyMs: number;
   humanCorrections?: number;
 }
@@ -34,6 +42,7 @@ export interface CandidateStats {
   attempts: number;
   verified: number;
   totalCostUsd: number;
+  costKnownCount?: number;
   totalLatencyMs: number;
   humanCorrections: number;
 }
@@ -77,11 +86,13 @@ export class ModelMesh {
   record(taskType: string, candidateId: string, outcome: Outcome): void {
     if (!this.candidates.has(candidateId)) throw new Error(`Unknown candidate: ${candidateId}`);
     const byCandidate = this.stats.get(taskType) ?? new Map<string, CandidateStats>();
-    const current = byCandidate.get(candidateId) ?? { attempts: 0, verified: 0, totalCostUsd: 0, totalLatencyMs: 0, humanCorrections: 0 };
+    const current = byCandidate.get(candidateId) ?? { attempts: 0, verified: 0, totalCostUsd: 0, costKnownCount: 0, totalLatencyMs: 0, humanCorrections: 0 };
     byCandidate.set(candidateId, {
       attempts: current.attempts + 1,
       verified: current.verified + (outcome.verified ? 1 : 0),
-      totalCostUsd: current.totalCostUsd + outcome.costUsd,
+      totalCostUsd: current.totalCostUsd + (outcome.costUsd ?? 0),
+      // legacy stats (pre cost-meter) recorded a cost with every outcome
+      costKnownCount: (current.costKnownCount ?? current.attempts) + (outcome.costUsd !== undefined ? 1 : 0),
       totalLatencyMs: current.totalLatencyMs + outcome.latencyMs,
       humanCorrections: current.humanCorrections + (outcome.humanCorrections ?? 0)
     });
@@ -89,12 +100,15 @@ export class ModelMesh {
   }
 
   metrics(taskType: string, candidateId: string): CandidateMetrics {
-    const stats = this.stats.get(taskType)?.get(candidateId) ?? { attempts: 0, verified: 0, totalCostUsd: 0, totalLatencyMs: 0, humanCorrections: 0 };
+    const stats = this.stats.get(taskType)?.get(candidateId) ?? { attempts: 0, verified: 0, totalCostUsd: 0, costKnownCount: 0, totalLatencyMs: 0, humanCorrections: 0 };
+    const costKnown = stats.costKnownCount ?? stats.attempts;
     return {
       candidateId,
       ...stats,
       firstPassVerifiedRate: stats.attempts === 0 ? 0 : stats.verified / stats.attempts,
-      costPerVerifiedResultUsd: stats.verified === 0 ? null : stats.totalCostUsd / stats.verified,
+      // claimable only when every recorded outcome carried a real cost;
+      // partial knowledge would understate the metric.
+      costPerVerifiedResultUsd: stats.verified === 0 || costKnown < stats.attempts ? null : stats.totalCostUsd / stats.verified,
       averageLatencyMs: stats.attempts === 0 ? null : stats.totalLatencyMs / stats.attempts
     };
   }

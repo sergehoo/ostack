@@ -88,3 +88,4 @@ export function toEvidenceItems(results: ProbeResult[]): EvidenceItem[] {
     ...(result.latencyMs !== undefined ? { metrics: { latencyMs: result.latencyMs } } : {})
   }));
 }
+export * from "./performance.js";

@@ -1,7 +1,7 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { JsonLinesAuditStore, MockProvider, auditEntry, type ModelProvider } from "@ostack/core";
-import { ModelMesh, type ModelCandidate, type SerializedMesh, type TaskRoute } from "@ostack/mesh";
+import { JsonLinesAuditStore, MockProvider, auditEntry, type ModelProvider, type ModelRequest, type ModelResponse } from "@ostack/core";
+import { ModelMesh, estimateCostUsd, type ModelCandidate, type SerializedMesh, type TaskRoute } from "@ostack/mesh";
 import { AnthropicProvider, OllamaProvider, OpenAIProvider } from "@ostack/providers";
 import { configDirectory, loadConfig } from "./config.js";
 import type { CommandContext } from "./commands.js";
@@ -18,6 +18,7 @@ export interface MeshSettings {
 export interface LoadedMesh {
   mesh: ModelMesh;
   providers: Map<string, ModelProvider>;
+  candidates: Map<string, ModelCandidate>;
   statsPath: string;
 }
 
@@ -27,8 +28,63 @@ export async function buildMesh(cwd: string, settings: MeshSettings): Promise<Lo
   try { mesh.loadStats(JSON.parse(await readFile(statsPath, "utf8")) as SerializedMesh); }
   catch { /* no stats yet — selection uses declared order */ }
   const providers = new Map<string, ModelProvider>();
-  for (const candidate of settings.candidates) providers.set(candidate.id, instantiate(candidate));
-  return { mesh, providers, statsPath };
+  const candidates = new Map<string, ModelCandidate>();
+  for (const candidate of settings.candidates) {
+    providers.set(candidate.id, instantiate(candidate));
+    candidates.set(candidate.id, candidate);
+  }
+  return { mesh, providers, candidates, statsPath };
+}
+
+// Wraps a provider to accumulate real token usage across a step's calls.
+export interface UsageSink { inputTokens: number; outputTokens: number; calls: number }
+
+export function meteredProvider(provider: ModelProvider, sink: UsageSink): ModelProvider {
+  return {
+    id: provider.id,
+    isAvailable: () => provider.isAvailable(),
+    complete: async (request: ModelRequest): Promise<ModelResponse> => {
+      const response = await provider.complete(request);
+      sink.calls += 1;
+      if (response.usage) {
+        sink.inputTokens += response.usage.inputTokens;
+        sink.outputTokens += response.usage.outputTokens;
+      }
+      return response;
+    }
+  };
+}
+
+// Execution ledger (§8): the workflow measures latency and real cost at run
+// time; VERIFICATION is settled later against the evidence pack. Until then
+// nothing enters the routing statistics.
+export interface LedgerEntry {
+  runId: string;
+  stepId: string;
+  taskType: string;
+  candidateId: string;
+  latencyMs: number;
+  costUsd?: number;
+  usage: { inputTokens: number; outputTokens: number; calls: number };
+}
+
+const ledgerPath = (cwd: string) => join(configDirectory(cwd), "mesh-ledger.jsonl");
+
+export async function appendLedger(cwd: string, entries: LedgerEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+  await appendFile(ledgerPath(cwd), entries.map((entry) => JSON.stringify(entry)).join("\n") + "\n", { encoding: "utf8", mode: 0o600 });
+}
+
+export function ledgerCost(loaded: LoadedMesh, candidateId: string, usage: { inputTokens: number; outputTokens: number }): number | undefined {
+  const candidate = loaded.candidates.get(candidateId);
+  return candidate ? estimateCostUsd(candidate, usage) : undefined;
+}
+
+async function readLedger(cwd: string): Promise<LedgerEntry[]> {
+  try {
+    const content = await readFile(ledgerPath(cwd), "utf8");
+    return content.split("\n").filter((line) => line.trim()).map((line) => JSON.parse(line) as LedgerEntry);
+  } catch { return []; }
 }
 
 function instantiate(candidate: ModelCandidate): ModelProvider {
@@ -104,9 +160,59 @@ export async function runMeshCommand(context: CommandContext): Promise<unknown> 
       }));
       return { status: "recorded", metrics: loaded.mesh.metrics(options.taskType, options.candidateId) };
     }
+    case "settle": {
+      // Converts the run's ledger entries into routing statistics once the
+      // verdict is known — from the evidence pack of that run (automatic) or
+      // an explicit --verified/--failed flag (human).
+      const runId = rest.find((argument) => !argument.startsWith("--"));
+      if (!runId) throw new Error("Usage: ostack mesh settle <runId> [--verified|--failed] — sans drapeau, le verdict est lu depuis l'Evidence Pack du run");
+      let verified: boolean | undefined;
+      if (rest.includes("--verified")) verified = true;
+      if (rest.includes("--failed")) verified = false;
+      if (verified === undefined) {
+        verified = await verdictFromEvidence(context.cwd, runId);
+        if (verified === undefined) throw new Error(`Aucun Evidence Pack trouvé pour le run ${runId}; fournissez --verified ou --failed (ou lancez 'ostack prove' d'abord)`);
+      }
+      const ledger = await readLedger(context.cwd);
+      const matching = ledger.filter((entry) => entry.runId === runId);
+      if (matching.length === 0) throw new Error(`Aucune entrée de ledger pour le run ${runId}`);
+      for (const entry of matching) {
+        loaded.mesh.record(entry.taskType, entry.candidateId, {
+          verified, latencyMs: entry.latencyMs,
+          ...(entry.costUsd !== undefined ? { costUsd: entry.costUsd } : {})
+        });
+      }
+      const remaining = ledger.filter((entry) => entry.runId !== runId);
+      await writeFile(ledgerPath(context.cwd), remaining.map((entry) => JSON.stringify(entry)).join("\n") + (remaining.length ? "\n" : ""), { encoding: "utf8", mode: 0o600 });
+      await writeFile(loaded.statsPath, `${JSON.stringify(loaded.mesh.toJSON(), null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
+      await new JsonLinesAuditStore(join(configDirectory(context.cwd), "audit.jsonl")).append(auditEntry({
+        actorId: process.env.USER ?? "cli-user", action: "mesh.settle", projectId: config.project.id, outcome: "succeeded",
+        details: { runId, verified, entries: matching.length, costKnown: matching.filter((entry) => entry.costUsd !== undefined).length }
+      }));
+      return {
+        status: "settled", runId, verified,
+        entries: matching.map((entry) => ({ stepId: entry.stepId, taskType: entry.taskType, candidateId: entry.candidateId, latencyMs: entry.latencyMs, costUsd: entry.costUsd ?? null }))
+      };
+    }
+    case "ledger":
+      return { pending: await readLedger(context.cwd) };
     default:
-      throw new Error(`Unknown mesh subcommand '${subcommand}'. Use routes | stats | record`);
+      throw new Error(`Unknown mesh subcommand '${subcommand}'. Use routes | stats | record | settle | ledger`);
   }
+}
+
+async function verdictFromEvidence(cwd: string, runId: string): Promise<boolean | undefined> {
+  const { readdir } = await import("node:fs/promises");
+  const directory = join(configDirectory(cwd), "evidence");
+  let names: string[];
+  try { names = (await readdir(directory)).filter((name) => name.endsWith(".json")); } catch { return undefined; }
+  for (const name of names.sort().reverse()) {
+    try {
+      const pack = JSON.parse(await readFile(join(directory, name), "utf8")) as { taskId?: string; verified?: boolean };
+      if (pack.taskId === runId && typeof pack.verified === "boolean") return pack.verified;
+    } catch { /* skip unreadable */ }
+  }
+  return undefined;
 }
 
 function parseRecordOptions(args: string[]): { taskType: string; candidateId: string; verified: boolean; costUsd: number; latencyMs: number } {

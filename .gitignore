@@ -18,7 +18,11 @@ dist/
 .ostack/observations/
 .ostack/benchmarks/
 .ostack/mesh.json
+.ostack/mesh-ledger.jsonl
 coverage/
 .env
 *.log
 .DS_Store
+.ostack/diagnoses/
+.ostack/decisions/
+.ostack/performance/

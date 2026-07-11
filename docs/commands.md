@@ -38,6 +38,12 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack domain check <pack.json> --action <a> --context <ctx.json>` | Évalue les règles métier sur un contexte réel | 1 |
 | `ostack domain scenarios <pack.json>` | Génère les scénarios de tests depuis les règles | 1 |
 | `ostack domain cross <pack1> <pack2> …` | Analyse interdomaines (concepts partagés, règles en chevauchement) | 1 |
+| `ostack architecture check [--gate]` | Vérifie les frontières d’architecture contre le graphe d’imports réel | 1 |
+| `ostack performance baseline [--samples N]` | Établit une baseline p50/p95 par sonde | 2 |
+| `ostack performance compare [--samples N] [--gate]` | Compare à la baseline et bloque sur régression | 2 |
+| `ostack root-cause <open\|check\|close> …` | Analyse de cause racine structurée sur le journal d’audit | 1 |
+| `ostack decision <record\|search> …` | Mémoire des décisions d’ingénierie (secrets masqués) | 2 |
+| `ostack mesh settle <runId> [--verified\|--failed]` | Convertit le ledger de coûts réels en statistiques après verdict | 2 |
 
 Une commande ne change jamais de niveau parce qu’un agent le demande. Une action de production issue de `release` reste de niveau 4 et exige une approbation humaine explicite.
 

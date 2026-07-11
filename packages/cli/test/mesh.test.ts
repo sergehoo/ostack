@@ -1,3 +1,7 @@
+// Hermetic: the machine may or may not run a local Ollama; tests must not
+// depend on it, so the ollama candidate points at an unreachable port.
+process.env.OLLAMA_HOST = "http://127.0.0.1:9";
+
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -68,7 +72,36 @@ test("the feature workflow reports which candidate served each step", async () =
   assert.equal(result.status, "waiting_approval");
   assert.ok(result.stepProviders, "mesh-configured runs expose per-step providers");
   // product-category agents are routed by the mesh; ollama is first-ranked but
-  // unavailable in tests, so the available mock candidate serves the step.
+  // unavailable (hermetic OLLAMA_HOST), so the mock candidate serves the step.
   assert.equal(result.stepProviders?.discovery, "mock/deterministic");
   assert.equal(result.stepProviders?.intent, "mock", "no intent_drafting route: session fallback");
+});
+
+test("routed steps write a cost/latency ledger; settle turns it into stats after the verdict", async () => {
+  const root = await meshProject();
+  const run = await runFeature({ cwd: root, args: ["Ledger", "demo", "--provider", "mock"], json: true }) as { runId: string };
+
+  const ledger = await runMeshCommand({ cwd: root, args: ["ledger"], json: true }) as { pending: Array<{ runId: string; stepId: string; candidateId: string; latencyMs: number; costUsd?: number; usage: { calls: number } }> };
+  const mine = ledger.pending.filter((entry) => entry.runId === run.runId);
+  // phase 1 routes discovery and specification (category 'product'); intent
+  // and architecture have no route in this config and fall back unmetered.
+  assert.ok(mine.length >= 2, "each mesh-routed agent step is metered");
+  assert.deepEqual([...new Set(mine.map((entry) => entry.stepId))].sort(), ["discovery", "specification"]);
+  assert.ok(mine.every((entry) => entry.latencyMs >= 0 && entry.usage.calls >= 1));
+  assert.ok(mine.every((entry) => entry.costUsd === undefined), "mock candidate has no pricing: cost stays UNKNOWN, never zero");
+
+  // settling without an evidence pack requires an explicit human verdict
+  await assert.rejects(runMeshCommand({ cwd: root, args: ["settle", run.runId], json: true }), /Evidence Pack/);
+  const settled = await runMeshCommand({ cwd: root, args: ["settle", run.runId, "--failed"], json: true }) as { status: string; entries: unknown[] };
+  assert.equal(settled.status, "settled");
+  assert.equal(settled.entries.length, mine.length);
+
+  const stats = await runMeshCommand({ cwd: root, args: ["stats"], json: true }) as { stats: Array<{ taskType: string; candidates: Array<{ candidateId: string; attempts: number; verified: number; costPerVerifiedResultUsd: number | null }> }> };
+  const product = stats.stats.find((entry) => entry.taskType === "product")?.candidates.find((candidate) => candidate.candidateId === "mock/deterministic");
+  assert.ok(product && product.attempts >= 1);
+  assert.equal(product.verified, 0);
+  assert.equal(product.costPerVerifiedResultUsd, null, "no known cost and no verified result: metric stays null");
+
+  // the ledger is consumed: settling the same run twice is impossible
+  await assert.rejects(runMeshCommand({ cwd: root, args: ["settle", run.runId, "--failed"], json: true }), /Aucune entrée/);
 });
