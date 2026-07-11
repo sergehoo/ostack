@@ -1,0 +1,1 @@
+{ "name": "ostack-plugin-example", "version": "0.1.0", "private": true, "type": "module", "dependencies": { "@ostack/plugin-sdk": "0.1.0" } }

@@ -1,0 +1,13 @@
+{
+  "name": "@ostack/mcp-server",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "ostack-mcp": "dist/server.js" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@ostack/core": "0.1.0",
+    "@ostack/discovery": "0.1.0",
+    "@ostack/sqlite": "0.1.0",
+    "zod": "^3.25.0"
+  }
+}

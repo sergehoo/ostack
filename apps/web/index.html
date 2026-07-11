@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="OStack engineering operations dashboard">
+  <title>OStack — Engineering OS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#"><span class="mark">O</span><strong>OStack</strong><span class="version">alpha</span></a>
+    <nav aria-label="Navigation principale">
+      <p class="nav-label">Workspace</p>
+      <a class="active" href="#overview"><span>◫</span> Vue d’ensemble</a>
+      <a href="#runs"><span>▷</span> Exécutions</a>
+      <p class="nav-label">Build system</p>
+      <a href="#agents"><span>✦</span> Agents</a>
+      <a href="#workflows"><span>⌘</span> Workflows</a>
+      <a href="#verification"><span>✓</span> Vérification</a>
+      <p class="nav-label">System</p>
+      <a href="#settings"><span>⚙</span> Configuration</a>
+    </nav>
+    <div class="workspace"><span class="avatar">OS</span><div><strong>Ogah Stack</strong><small>Local workspace</small></div><span>⌄</span></div>
+  </aside>
+  <main>
+    <header><div><small>OGAH STACK /</small> Dashboard</div><div class="header-actions"><span class="status" id="api-status"><i></i> Connexion à l’API…</span></div></header>
+    <section class="content" id="overview">
+      <div class="hero"><div><p class="eyebrow">VERIFIED ENGINEERING CONTROL PLANE</p><h1>Bonjour, bienvenue dans OStack.</h1><p>Chaque chiffre affiché ici provient d’un artefact réel : exécutions, intentions compilées, Evidence Packs et délibérations.</p></div><button class="primary">＋ Nouvelle exécution</button></div>
+      <div class="metrics">
+        <article><div><span class="metric-icon violet">▷</span><small>EXÉCUTIONS LOCALES</small></div><strong id="m-runs">—</strong><p id="m-runs-detail">En attente de l’API</p></article>
+        <article><div><span class="metric-icon green">✓</span><small>EVIDENCE PACKS</small></div><strong id="m-packs">—</strong><p id="m-packs-detail">vérifiés / total</p></article>
+        <article><div><span class="metric-icon blue">✦</span><small>INVARIANTS DÉCLARÉS</small></div><strong id="m-invariants">—</strong><p id="m-invariants-detail">via intentions compilées</p></article>
+        <article><div><span class="metric-icon amber">◈</span><small>NON PROUVÉS</small></div><strong id="m-unverified">—</strong><p id="m-unverified-detail">invariants et permissions sans preuve</p></article>
+      </div>
+      <div class="grid">
+        <article class="panel activity"><div class="panel-head"><div><h2>Exécutions récentes</h2><p>Workflows locaux réels (SQLite)</p></div></div>
+          <div id="activity-list"><div class="run"><div><strong>Aucune donnée</strong><p>Lancez l’API avec <code>npm run api</code></p></div></div></div>
+        </article>
+        <article class="panel quality" id="verification"><div class="panel-head"><div><h2>Verification Center</h2><p>Preuves, délibérations et traçabilité</p></div><span class="score" id="v-score">—</span></div>
+          <div class="check"><span>Evidence Packs vérifiés</span><strong id="v-packs">—</strong><i><b id="v-packs-bar"></b></i></div>
+          <div class="check"><span>Brouillons de preuve en attente</span><strong id="v-drafts">—</strong><i><b id="v-drafts-bar"></b></i></div>
+          <div class="check"><span>Défis bloquants non résolus</span><strong id="v-blocking">—</strong><i><b id="v-blocking-bar"></b></i></div>
+          <div class="check"><span>Nœuds du graphe non prouvés</span><strong id="v-unverified">—</strong><i><b id="v-unverified-bar"></b></i></div>
+          <p id="v-note" class="eyebrow"></p>
+        </article>
+      </div>
+      <div class="section-title"><div><h2>Workflows suggérés</h2><p>Lancez un processus avec votre équipe d’agents</p></div></div>
+      <div class="workflow-cards">
+        <article><span class="wf-icon violet">✦</span><h3>Nouvelle fonctionnalité</h3><p>Intention compilée, délibération contradictoire et squelette de preuve.</p><div><span>feature-delivery v1.1</span><button>Exécuter →</button></div></article>
+        <article><span class="wf-icon blue">⌕</span><h3>Audit complet</h3><p>Architecture, sécurité, qualité et performance.</p><div><span>quality-gate</span><button>Exécuter →</button></div></article>
+        <article><span class="wf-icon green">▤</span><h3>Documentation</h3><p>Analyse du code et production de la documentation.</p><div><span>documentation</span><button>Exécuter →</button></div></article>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

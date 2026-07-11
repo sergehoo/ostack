@@ -1,0 +1,13 @@
+{
+  "name": "@ostack/changes",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@ostack/core": "0.1.0",
+    "@ostack/isolation": "0.1.0",
+    "@ostack/quality": "0.1.0",
+    "@ostack/workspace": "0.1.0"
+  }
+}

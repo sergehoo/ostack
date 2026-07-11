@@ -1,0 +1,66 @@
+{
+  "$schema": "../schemas/benchmark-suite.schema.json",
+  "schemaVersion": 1,
+  "id": "core-platform-v0",
+  "repetitions": 3,
+  "tasks": [
+    {
+      "id": "intent-compile-pilot",
+      "category": "greenfield_feature",
+      "description": "Compiler l'intention pilote: mêmes invariants, mêmes propriétés adversariales à chaque exécution",
+      "command": "intent-compile",
+      "args": ["--from", "examples/intent-draft.json"],
+      "checks": [
+        { "path": "summary.invariants", "equals": 4 },
+        { "path": "summary.adversarialProperties", "equals": 3 },
+        { "path": "intent.contentHash", "exists": true }
+      ]
+    },
+    {
+      "id": "prove-pilot",
+      "category": "release_readiness",
+      "description": "Assembler l'Evidence Pack pilote: verdict et recommandation reproductibles",
+      "command": "prove",
+      "args": ["examples/evidence-input.json"],
+      "checks": [
+        { "path": "evidencePack.verified", "equals": true },
+        { "path": "evidencePack.releaseRecommendation", "equals": "APPROVE_WITH_OBSERVATIONS" }
+      ]
+    },
+    {
+      "id": "graph-traceability",
+      "category": "incident_diagnosis",
+      "description": "Reconstruire le graphe: traçabilité complète, aucun invariant non prouvé",
+      "command": "graph",
+      "args": ["rebuild"],
+      "checks": [
+        { "path": "nodes", "equals": 14 },
+        { "path": "edges", "equals": 18 },
+        { "path": "unverified.length", "equals": 0 }
+      ]
+    },
+    {
+      "id": "feature-human-gate",
+      "category": "permission_bypass_prevention",
+      "description": "Le workflow feature s'arrête à la barrière humaine sans approbation, à chaque fois",
+      "command": "feature",
+      "args": ["Benchmark", "gate", "--provider", "mock"],
+      "checks": [
+        { "path": "status", "equals": "waiting_approval" },
+        { "path": "pendingApprovalRequestId", "exists": true },
+        { "path": "completedSteps.length", "equals": 4 }
+      ]
+    },
+    {
+      "id": "security-authorization",
+      "category": "security_regression",
+      "description": "Le manifeste d'autorisation défensif valide de façon stable",
+      "command": "security-lab",
+      "args": ["validate-authorization", "examples/security-authorization.json"],
+      "checks": [
+        { "path": "status", "equals": "valid" },
+        { "path": "authorizationId", "equals": "AUTH-2026-001" }
+      ]
+    }
+  ]
+}

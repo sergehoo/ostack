@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck & build
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Dependency audit (high+)
+        run: npm audit --audit-level=high
+      - name: Benchmark de stabilité (3 répétitions)
+        run: node --import tsx packages/cli/src/bin.ts benchmark --json

@@ -1,0 +1,7 @@
+{
+  "name": "@ostack/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@ostack/core": "0.1.0", "@ostack/discovery": "0.1.0", "@ostack/sqlite": "0.1.0", "@ostack/evidence": "0.1.0", "@ostack/graph": "0.1.0" }
+}

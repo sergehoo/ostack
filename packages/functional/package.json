@@ -1,0 +1,11 @@
+{
+  "name": "@ostack/functional",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@ostack/intent": "0.1.0",
+    "@ostack/evidence": "0.1.0"
+  }
+}

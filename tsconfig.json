@@ -1,0 +1,28 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/sdk" },
+    { "path": "packages/sqlite" },
+    { "path": "packages/providers" },
+    { "path": "packages/mcp" },
+    { "path": "packages/discovery" },
+    { "path": "packages/validation" },
+    { "path": "packages/workspace" },
+    { "path": "packages/quality" },
+    { "path": "packages/evidence" },
+    { "path": "packages/intent" },
+    { "path": "packages/graph" },
+    { "path": "packages/twin" },
+    { "path": "packages/deliberation" },
+    { "path": "packages/mesh" },
+    { "path": "packages/observe" },
+    { "path": "packages/functional" },
+    { "path": "packages/security-lab" },
+    { "path": "packages/benchmark" },
+    { "path": "packages/changes" },
+    { "path": "packages/isolation" },
+    { "path": "packages/cli" },
+    { "path": "apps/api" }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "ostack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OStack — an open, provider-neutral AI software engineering operating system",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "check": "tsc -b --pretty false",
+    "lint": "eslint .",
+    "test": "node --import tsx --test packages/*/test/**/*.test.ts apps/*/test/**/*.test.ts",
+    "ostack": "node --import tsx packages/cli/src/bin.ts",
+    "api": "node --import tsx apps/api/src/server.ts",
+    "web": "node apps/web/server.mjs",
+    "mcp": "node packages/mcp/dist/server.js",
+    "doctor": "node --import tsx packages/cli/src/bin.ts doctor",
+    "self-prove": "node --import tsx scripts/self-prove.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.5",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.63.0"
+  }
+}

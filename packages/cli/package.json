@@ -1,0 +1,24 @@
+{
+  "name": "@ostack/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "ostack": "dist/bin.js" },
+  "dependencies": {
+    "@ostack/core": "0.1.0",
+    "@ostack/changes": "0.1.0",
+    "@ostack/evidence": "0.1.0",
+    "@ostack/intent": "0.1.0",
+    "@ostack/graph": "0.1.0",
+    "@ostack/twin": "0.1.0",
+    "@ostack/deliberation": "0.1.0",
+    "@ostack/mesh": "0.1.0",
+    "@ostack/benchmark": "0.1.0",
+    "@ostack/observe": "0.1.0",
+    "@ostack/security-lab": "0.1.0",
+    "@ostack/discovery": "0.1.0",
+    "@ostack/providers": "0.1.0",
+    "@ostack/sqlite": "0.1.0",
+    "@ostack/validation": "0.1.0",
+    "@ostack/quality": "0.1.0"
+  }
+}
