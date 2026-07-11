@@ -20,6 +20,7 @@
     { "path": "packages/functional" },
     { "path": "packages/security-lab" },
     { "path": "packages/benchmark" },
+    { "path": "packages/domain" },
     { "path": "packages/changes" },
     { "path": "packages/isolation" },
     { "path": "packages/cli" },

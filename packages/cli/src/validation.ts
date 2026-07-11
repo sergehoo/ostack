@@ -17,7 +17,8 @@ export async function validateBuiltIns(frameworkRoot: string): Promise<BuiltInVa
     ["standard typescript-node", "schemas/standard.schema.json", "standards/typescript-node.json"],
     ["standard python-django", "schemas/standard.schema.json", "standards/python-django.json"],
     ["standard react-frontend", "schemas/standard.schema.json", "standards/react-frontend.json"],
-    ["benchmark core suite", "schemas/benchmark-suite.schema.json", "benchmarks/core-suite.json"]
+    ["benchmark core suite", "schemas/benchmark-suite.schema.json", "benchmarks/core-suite.json"],
+    ["example domain pack", "schemas/domain-pack.schema.json", "examples/domain-pack-credit.json"]
   ] as const;
   const validator = new SchemaValidator();
   return Promise.all(pairs.map(async ([name, schemaPath, documentPath]) => {

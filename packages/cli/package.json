@@ -13,6 +13,7 @@
     "@ostack/deliberation": "0.1.0",
     "@ostack/mesh": "0.1.0",
     "@ostack/benchmark": "0.1.0",
+    "@ostack/domain": "0.1.0",
     "@ostack/observe": "0.1.0",
     "@ostack/security-lab": "0.1.0",
     "@ostack/discovery": "0.1.0",

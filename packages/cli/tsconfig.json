@@ -6,6 +6,6 @@
     { "path": "../core" }, { "path": "../providers" }, { "path": "../sqlite" },
     { "path": "../discovery" }, { "path": "../validation" },
     { "path": "../changes" }, { "path": "../quality" }, { "path": "../evidence" }, { "path": "../intent" }, { "path": "../graph" }, { "path": "../twin" },
-    { "path": "../deliberation" }, { "path": "../observe" }, { "path": "../security-lab" }, { "path": "../mesh" }, { "path": "../benchmark" }
+    { "path": "../deliberation" }, { "path": "../observe" }, { "path": "../security-lab" }, { "path": "../mesh" }, { "path": "../benchmark" }, { "path": "../domain" }
   ]
 }

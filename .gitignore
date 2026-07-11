@@ -1,5 +1,7 @@
 node_modules/
 dist/
+*.tsbuildinfo
+.ostack/self-evidence-input.json
 .ostack/cache/
 .ostack/runs/
 .ostack/ostack.db

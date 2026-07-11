@@ -32,6 +32,12 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack mesh [routes\|stats]` | Affiche le routage des modèles et les métriques par candidat | 1 |
 | `ostack mesh record <tâche> <candidat> --verified\|--failed --cost <usd> --latency <ms>` | Enregistre un résultat réel (coût et latence obligatoires) | 2 |
 | `ostack benchmark [suite.json]` | Exécute la suite de benchmark (N répétitions, score = stabilité) | 2 |
+| `ostack domain create --name <id> [--sources <dir>]` | Crée un Domain Pack vierge avec inventaire des sources | 2 |
+| `ostack domain score <pack.json>` | Score de compréhension métier calculé + niveau de maturité | 1 |
+| `ostack domain validate <pack.json> --rule <id> --expert <nom> --reason <r>` | Confirmation experte d’une règle sourcée (auditée) | 2 |
+| `ostack domain check <pack.json> --action <a> --context <ctx.json>` | Évalue les règles métier sur un contexte réel | 1 |
+| `ostack domain scenarios <pack.json>` | Génère les scénarios de tests depuis les règles | 1 |
+| `ostack domain cross <pack1> <pack2> …` | Analyse interdomaines (concepts partagés, règles en chevauchement) | 1 |
 
 Une commande ne change jamais de niveau parce qu’un agent le demande. Une action de production issue de `release` reste de niveau 4 et exige une approbation humaine explicite.
 

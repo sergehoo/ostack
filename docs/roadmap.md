@@ -14,7 +14,9 @@ Livré : adaptateurs OpenAI/Anthropic/Ollama, stockage SQLite, checkpoints/repri
 
 Également livré : routage Model Mesh par étape dans le workflow feature (`stepProviders`, repli explicite) et commande `mesh` (routes, stats, enregistrement de résultats réels) ; packs de standards validés par schéma (typescript-node, python-django, react-frontend) ; benchmark de stabilité §33 (`ostack benchmark`, 5 tâches × 3 répétitions) ; lint ESLint ; CI GitHub Actions ; LICENSE Apache-2.0 ; auto-preuve de release (`npm run self-prove`) et [dossier de préparation production](production-readiness.md).
 
-Reporté à M2 : génération de plans par sorties structurées, sandbox OS/conteneur durcie, branchement automatique au workflow après validation humaine.
+Également livré : couche Universal Domain Intelligence (`@ostack/domain` + commande `domain`) — ontologie universelle, Domain Packs sourcés (schéma + exemple crédit CI), score de compréhension calculé, maturité 0-4 avec blocage des actions critiques, moteur de règles (une règle non confirmée escalade vers un humain, jamais de blocage ou passage silencieux), tables de décision (conflits et cas non couverts détectés), garde de juridiction, scénarios de tests générés et analyse interdomaines.
+
+Reporté à M2 : génération de plans par sorties structurées, sandbox OS/conteneur durcie, branchement automatique au workflow après validation humaine, pipeline d'extraction métier assisté par modèle, process mining, simulation métier, Universal Domain Center Web et marketplace de Domain Packs.
 
 ## M2 — Team preview
 

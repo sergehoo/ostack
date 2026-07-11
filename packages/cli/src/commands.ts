@@ -42,6 +42,7 @@ export const commands: Record<string, { description: string; handler: CommandHan
   "security-lab": { description: "Valider une autorisation de test de sécurité défensif", handler: async (context) => (await import("./security-lab.js")).runSecurityLab(context) },
   mesh: { description: "Afficher le routage des modèles et enregistrer des résultats vérifiés", handler: async (context) => (await import("./mesh.js")).runMeshCommand(context) },
   benchmark: { description: "Exécuter la suite de benchmark et mesurer la stabilité", handler: async (context) => (await import("./benchmark.js")).runBenchmarkCommand(context) },
+  domain: { description: "Créer, scorer, valider et interroger les Domain Packs métier", handler: async (context) => (await import("./domain.js")).runDomain(context) },
   update: { description: "Vérifier et appliquer une mise à jour OStack", handler: notYetAutomated("update", "self-update") }
 };
 
