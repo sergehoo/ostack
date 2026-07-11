@@ -20,6 +20,7 @@ const notYetAutomated = (name: string, workflow: string): CommandHandler => asyn
 export const commands: Record<string, { description: string; handler: CommandHandler }> = {
   init: { description: "Initialiser OStack dans le projet", handler: async ({ cwd, args }) => ({ status: "initialized", config: await initializeConfig(cwd, args.join(" ") || basename(cwd)) }) },
   doctor: { description: "Diagnostiquer l’installation et la configuration", handler: doctor },
+  install: { description: "Installer le framework OStack dans le projet (Claude Code, Cursor, Codex)", handler: async (context) => (await import("./install.js")).runInstall(context) },
   discover: { description: "Comprendre le code, la documentation et le métier", handler: discover },
   feature: { description: "Concevoir et développer une fonctionnalité", handler: async (context) => (await import("./feature.js")).runFeature(context) },
   bug: { description: "Diagnostiquer et corriger un défaut", handler: notYetAutomated("bug", "bug-resolution") },

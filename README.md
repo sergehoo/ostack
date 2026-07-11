@@ -15,16 +15,20 @@ cd ostack && npm install && npm run build
 npm link --workspace @ostack/cli    # expose la commande `ostack` sur le PATH
 ```
 
-Ensuite, dans **n'importe quel** projet :
+Ensuite, dans **n'importe quel** projet, installez le framework OStack dans le dépôt :
 
 ```bash
 cd ~/mon-projet
-ostack init "Mon projet"     # crée .ostack/ dans CE projet
+ostack init "Mon projet"                 # crée .ostack/ dans CE projet
+ostack install --assistant claude        # dépose commandes, agents, skill, standards, workflows
 ostack doctor
 ```
 
-`ostack --help` liste les commandes. Pour un usage sans installation globale, `npm run ostack -- <cmd>`
-depuis le dépôt reste équivalent (mode développement).
+`ostack install` pose le framework **dans le projet** au format de votre assistant :
+`--assistant claude` (slash commands `/ostack:*` + subagents sous `.claude/`), `cursor`
+(règles sous `.cursor/`) ou `codex` (`AGENTS.md` + `.ostack/`). Claude Code, Codex ou Cursor lisent
+alors ces définitions ; la commande `ostack` fournit les preuves déterministes derrière chaque verbe.
+`ostack --help` liste les commandes ; `npm run ostack -- <cmd>` reste équivalent en mode développement.
 
 ## Workflow de fonctionnalité
 
@@ -69,6 +73,7 @@ Le dashboard est disponible sur `http://127.0.0.1:4320` et l’API sur `http://1
 - sandbox de modifications locales avec chemins protégés, diff, empreintes et rollback.
 - plans de changement structurés avec confirmation anti-TOCTOU et rollback automatique sur échec qualité.
 - validation des changements dans une copie éphémère avant toute promotion vers le projet réel.
+- **Framework installable** : `ostack install` dépose commandes `/ostack:*`, agents, skill de méthode, standards et workflows directement dans le projet, au format Claude Code / Cursor / Codex. Léger dans le projet, vérifiable via la commande `ostack`. Voir [le framework](docs/framework.md).
 - **Proof-Carrying Software** : noyau de vérification déterministe (Evidence Pack, Confidence Score, Quality Budget, Definition of Done) et commandes `prove`, `verify --gate`, `confidence`. Voir [la preuve logicielle](docs/evidence.md).
 - **Chaîne d'ingénierie vérifiée** : Intent-to-Proof Compiler (`intent-compile`), Knowledge Graph de traçabilité (`graph`), jumeau numérique avec détection de dérive (`drift`), délibération multi-agents à arbitrage par preuves (`challenge`), Model Mesh routé au coût par résultat vérifié, observation runtime (`observe`), Functional Testing Studio (matrice de permissions) et Authorized Security Lab défensif (`security-lab`). Voir [la chaîne vérifiée](docs/verified-engineering.md).
 - **Intelligence d'ingénierie** : boucle de vérification autonome à budgets durs, Performance Intelligence (baseline/régression), Architecture Intelligence (frontières vérifiées, appliquées à OStack lui-même), analyse de cause racine et mémoire des décisions. Voir [l'intelligence d'ingénierie](docs/engineering-intelligence.md).

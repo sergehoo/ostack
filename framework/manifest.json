@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "name": "ostack-framework",
+  "version": "0.1.0",
+  "description": "Framework OStack installable dans un projet: commandes, agents, skill de méthode, standards, workflows et politiques. Consommé par Claude Code, Codex, Cursor ou un terminal.",
+  "targets": {
+    "claude": {
+      "description": "Claude Code — slash commands et subagents",
+      "map": [
+        { "from": "framework/commands", "to": ".claude/commands/ostack", "glob": "*.md" },
+        { "from": "framework/agents", "to": ".claude/agents", "glob": "*.md" },
+        { "from": "framework/skills", "to": ".claude/skills/ostack", "glob": "*.md" },
+        { "from": "standards", "to": ".ostack/standards", "glob": "*.json" },
+        { "from": "workflows", "to": ".ostack/workflows", "glob": "*.json" },
+        { "from": "policies", "to": ".ostack/policies", "glob": "*.json" }
+      ],
+      "agentsFile": "CLAUDE.md"
+    },
+    "cursor": {
+      "description": "Cursor — règles projet",
+      "map": [
+        { "from": "framework/commands", "to": ".cursor/rules/ostack/commands", "glob": "*.md" },
+        { "from": "framework/agents", "to": ".cursor/rules/ostack/agents", "glob": "*.md" },
+        { "from": "framework/skills", "to": ".cursor/rules/ostack", "glob": "*.md" },
+        { "from": "standards", "to": ".ostack/standards", "glob": "*.json" },
+        { "from": "workflows", "to": ".ostack/workflows", "glob": "*.json" },
+        { "from": "policies", "to": ".ostack/policies", "glob": "*.json" }
+      ],
+      "agentsFile": ".cursorrules"
+    },
+    "codex": {
+      "description": "Codex / assistant générique — AGENTS.md et .ostack/",
+      "map": [
+        { "from": "framework/commands", "to": ".ostack/commands", "glob": "*.md" },
+        { "from": "framework/agents", "to": ".ostack/agents", "glob": "*.md" },
+        { "from": "framework/skills", "to": ".ostack/skills", "glob": "*.md" },
+        { "from": "standards", "to": ".ostack/standards", "glob": "*.json" },
+        { "from": "workflows", "to": ".ostack/workflows", "glob": "*.json" },
+        { "from": "policies", "to": ".ostack/policies", "glob": "*.json" }
+      ],
+      "agentsFile": "AGENTS.md"
+    }
+  },
+  "agentsPreamble": "## OStack — Verified Engineering\n\nCe projet est équipé du framework OStack. Applique la méthode `ostack` (skill installé): toute affirmation de réussite doit être adossée à une preuve exécutée via la commande `ostack`. Commandes disponibles sous `ostack <verbe>` (voir les définitions installées). Aucune action critique sans preuve ni approbation humaine."
+}
