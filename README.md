@@ -4,20 +4,33 @@ OStack est un système d’exploitation open source pour l’ingénierie logicie
 
 > État : **developer preview M1 — vérifiée par elle-même**. `npm run self-prove` exécute typecheck, lint, tests (catégories mesurées), audit de dépendances et benchmark de stabilité, puis assemble l'Evidence Pack de release : `VERIFIED · APPROVE_WITH_OBSERVATIONS`. La persistance d'équipe et l'isolation conteneur appartiennent à M2/M3 — voir [la préparation production](docs/production-readiness.md). Ne pas déployer en multi-utilisateurs.
 
-## Démarrage
+## Installation (outil global)
+
+OStack est un **outil en ligne de commande** : installez-le une fois, puis lancez `ostack`
+depuis n'importe quel projet — il agit sur le répertoire courant, pas sur lui-même.
 
 ```bash
-npm install
-npm run build
-npm run ostack -- init "Mon projet"
-npm run doctor
+git clone https://github.com/sergehoo/ostack.git
+cd ostack && npm install && npm run build
+npm link --workspace @ostack/cli    # expose la commande `ostack` sur le PATH
 ```
 
-Exécuter un workflow de fonctionnalité avec un fournisseur local ou distant :
+Ensuite, dans **n'importe quel** projet :
 
 ```bash
-npm run ostack -- feature "Ajouter le besoin métier" --provider ollama
-npm run ostack -- feature "Ajouter le besoin métier" --provider openai
+cd ~/mon-projet
+ostack init "Mon projet"     # crée .ostack/ dans CE projet
+ostack doctor
+```
+
+`ostack --help` liste les commandes. Pour un usage sans installation globale, `npm run ostack -- <cmd>`
+depuis le dépôt reste équivalent (mode développement).
+
+## Workflow de fonctionnalité
+
+```bash
+cd ~/mon-projet
+ostack feature "Ajouter le besoin métier" --provider ollama
 ```
 
 Le workflow s’arrête devant chaque barrière humaine et fournit la commande exacte de reprise. `--provider mock` permet un test déterministe sans appel externe.
@@ -25,10 +38,8 @@ Le workflow s’arrête devant chaque barrière humaine et fournit la commande e
 Prévisualiser puis appliquer un plan de changement contrôlé :
 
 ```bash
-npm run ostack -- change examples/change-plan.json
-npm run ostack -- change examples/change-plan.json \
-  --confirm <empreinte-affichée> \
-  --reason "Diff et commandes qualité vérifiés"
+ostack change change-plan.json
+ostack change change-plan.json --confirm <empreinte-affichée> --reason "Diff et commandes qualité vérifiés"
 ```
 
 Lancer les surfaces locales :
