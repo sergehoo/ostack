@@ -28,8 +28,17 @@ export async function runIntentCompile(context: CommandContext): Promise<unknown
   } else {
     const request = options.positionals.join(" ").trim();
     if (!request) throw new Error("Usage: ostack intent-compile <besoin en langage naturel> [--provider …] | --from <draft.json>");
-    const provider = await selectProvider(config.ai.preferredProviders, options.provider, config.ai.models);
-    if (provider.id === "mock") throw new Error("The mock provider cannot draft an intent; use --from <draft.json> for a deterministic run");
+    let provider;
+    try {
+      provider = await selectProvider(config.ai.preferredProviders, options.provider, config.ai.models);
+    } catch {
+      throw new Error(
+        "Aucun fournisseur IA disponible pour rédiger le brouillon. Trois options: " +
+        "(1) rédigez le brouillon vous-même (ou via votre assistant Claude/Cursor/Codex) au format schemas/intent-draft.schema.json puis relancez avec --from <draft.json> — c'est la voie recommandée quand OStack est piloté depuis un assistant; " +
+        "(2) démarrez Ollama en local; (3) exportez OPENAI_API_KEY ou ANTHROPIC_API_KEY."
+      );
+    }
+    if (provider.id === "mock") throw new Error("Le fournisseur mock ne peut pas rédiger d'intention; rédigez le brouillon et utilisez --from <draft.json> pour une compilation déterministe");
     draft = await draftIntent(slugify(request), request, provider);
     source = `provider:${provider.id}`;
   }
