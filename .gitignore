@@ -28,3 +28,6 @@ coverage/
 .ostack/performance/
 .ostack/knowledge/
 .ostack/tmp/
+.ostack/evolution/
+.ostack/runs/*/raw-logs/
+.ostack/sandboxes/

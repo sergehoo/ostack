@@ -18,7 +18,9 @@
     "web": "node apps/web/server.mjs",
     "mcp": "node packages/mcp/dist/server.js",
     "doctor": "node --import tsx packages/cli/src/bin.ts doctor",
-    "self-prove": "node --import tsx scripts/self-prove.ts"
+    "self-prove": "node --import tsx scripts/self-prove.ts",
+    "validate:evolution": "node scripts/validate-evolution.mjs",
+    "security:secrets": "node scripts/scan-secrets.mjs"
   },
   "engines": {
     "node": ">=22"

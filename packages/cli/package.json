@@ -26,6 +26,7 @@
     "@ostack/architecture": "0.1.0",
     "@ostack/diagnosis": "0.1.0",
     "@ostack/decisions": "0.1.0",
-    "@ostack/learning": "0.1.0"
+    "@ostack/learning": "0.1.0",
+    "@ostack/evolution": "0.1.0"
   }
 }

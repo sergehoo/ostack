@@ -1,0 +1,45 @@
+name: OStack Evolution Verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "agents/**"
+      - "framework/**"
+      - "skills/**"
+      - "workflows/**"
+      - "standards/**"
+      - "policies/**"
+      - "domain-packs/**"
+      - "knowledge/**"
+      - "lessons/**"
+      - "patterns/**"
+      - "tests/**"
+
+# Moindre privilège: lecture du dépôt, écriture limitée aux PR et checks.
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
+      - name: Valider les ressources et le ledger d'évolution
+        run: npm run validate:evolution
+      - name: Analyse de secrets
+        run: npm run security:secrets

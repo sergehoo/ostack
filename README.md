@@ -73,6 +73,7 @@ Le dashboard est disponible sur `http://127.0.0.1:4320` et l’API sur `http://1
 - sandbox de modifications locales avec chemins protégés, diff, empreintes et rollback.
 - plans de changement structurés avec confirmation anti-TOCTOU et rollback automatique sur échec qualité.
 - validation des changements dans une copie éphémère avant toute promotion vers le projet réel.
+- **Évolution Git-native** : chaque apprentissage vérifié devient une évolution versionnée (ledger, branche, commit, PR), fusionnée automatiquement seulement à faible risque ; l'auto-évolution ne peut pas réduire ses propres garde-fous (`ostack evolve`). Voir [l'évolution autonome](docs/evolution.md).
 - **Apprentissage automatique** : la base de connaissance s'enrichit toute seule des commandes, preuves, délibérations et projets (`ostack learn`), en faits sourcés cross-projets, jamais inventés. Voir [l'apprentissage](docs/learning.md).
 - **Framework installable** : `ostack install` dépose commandes `/ostack:*`, agents, skill de méthode, standards et workflows directement dans le projet, au format Claude Code / Cursor / Codex. Léger dans le projet, vérifiable via la commande `ostack`. Voir [le framework](docs/framework.md).
 - **Proof-Carrying Software** : noyau de vérification déterministe (Evidence Pack, Confidence Score, Quality Budget, Definition of Done) et commandes `prove`, `verify --gate`, `confidence`. Voir [la preuve logicielle](docs/evidence.md).
