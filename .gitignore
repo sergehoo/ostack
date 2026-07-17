@@ -26,3 +26,5 @@ coverage/
 .ostack/diagnoses/
 .ostack/decisions/
 .ostack/performance/
+.ostack/knowledge/
+.ostack/tmp/

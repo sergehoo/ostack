@@ -60,12 +60,19 @@ export async function runInstall(context: CommandContext): Promise<unknown> {
     agentsUpdated = true;
   }
 
+  // Apprentissage automatique (§24): pour Claude Code, pose un hook `Stop` qui
+  // enrichit la base de connaissance après chaque session. Fusion prudente d'un
+  // settings.json existant; idempotent; ne remplace jamais des hooks présents.
+  let learningHook = false;
+  if (assistant === "claude") learningHook = await installLearningHook(context.cwd);
+
   await new JsonLinesAuditStore(join(configDirectory(context.cwd), "audit.jsonl")).append(auditEntry({
     actorId: process.env.USER ?? "cli-user", action: "framework.install", projectId: (await loadConfig(context.cwd)).project.id, outcome: "succeeded",
-    details: { assistant, version: manifest.version, installed: installed.length, skipped: skipped.length }
+    details: { assistant, version: manifest.version, installed: installed.length, skipped: skipped.length, learningHook }
   }));
 
   return {
+    learningHook,
     status: "installed",
     assistant,
     frameworkVersion: manifest.version,
@@ -77,6 +84,27 @@ export async function runInstall(context: CommandContext): Promise<unknown> {
       ? "Ouvrez Claude Code dans ce projet: les commandes /ostack:* et les agents sont disponibles."
       : "Votre assistant lira les définitions installées et le fichier d'instructions du projet."
   };
+}
+
+// Best-effort, reversible: add a Stop hook running `ostack learn observe`
+// unless the project already declares one. Never clobbers existing hooks.
+async function installLearningHook(cwd: string): Promise<boolean> {
+  const path = join(cwd, ".claude", "settings.json");
+  let settings: { hooks?: Record<string, unknown[]> } = {};
+  const existing = await readFileOrEmpty(path);
+  if (existing.trim()) {
+    try { settings = JSON.parse(existing); } catch { return false; }
+  }
+  settings.hooks = settings.hooks ?? {};
+  const stop = Array.isArray(settings.hooks.Stop) ? settings.hooks.Stop : [];
+  const command = "ostack learn observe --global --quiet";
+  const already = JSON.stringify(stop).includes("ostack learn observe");
+  if (already) return false;
+  stop.push({ hooks: [{ type: "command", command }] });
+  settings.hooks.Stop = stop;
+  await mkdir(join(cwd, ".claude"), { recursive: true });
+  await writeFile(path, `${JSON.stringify(settings, null, 2)}\n`, { encoding: "utf8" });
+  return true;
 }
 
 function readAssistant(args: string[]): Assistant {

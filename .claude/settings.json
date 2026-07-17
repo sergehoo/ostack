@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ostack learn observe --global --quiet"
+          }
+        ]
+      }
+    ]
+  }
+}

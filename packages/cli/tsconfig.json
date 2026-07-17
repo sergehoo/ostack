@@ -67,6 +67,9 @@
     },
     {
       "path": "../decisions"
+    },
+    {
+      "path": "../learning"
     }
   ]
 }
