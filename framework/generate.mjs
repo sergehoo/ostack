@@ -39,46 +39,60 @@ const AGENTS = [
 ];
 
 // Commandes phares, adossées à la CLI déterministe `ostack`.
+// [nom, description, invocation, consigne, argument-hint]
 const COMMANDS = [
   ["intent-compile", "Compiler un besoin en invariants, propriétés Gherkin et preuves attendues.",
     'ostack intent-compile "<besoin>"   # ou --from <draft.json> (déterministe)',
-    "Utilise-la AVANT d'implémenter. Lis les invariants et propriétés adversariales produits; ils deviennent tes critères d'acceptation."],
+    "Utilise-la AVANT d'implémenter. Lis les invariants et propriétés adversariales produits; ils deviennent tes critères d'acceptation.",
+    "<besoin en langage naturel>"],
   ["prove", "Assembler et sceller l'Evidence Pack d'une tâche.",
     "ostack prove <evidence-input.json>",
-    "Renseigne uniquement des observations RÉELLEMENT exécutées (tests, sécurité, perf). Le statut VERIFIED est refusé si une preuve manque."],
+    "Renseigne uniquement des observations RÉELLEMENT exécutées (tests, sécurité, perf). Le statut VERIFIED est refusé si une preuve manque.",
+    "<chemin evidence-input.json>"],
   ["verify", "Rendre un verdict de release fondé sur les preuves.",
     "ostack verify <evidence-input.json> --gate",
-    "`--gate` échoue si le budget qualité ou la Definition of Done n'est pas atteint. Ne contourne jamais un échec de gate."],
+    "`--gate` échoue si le budget qualité ou la Definition of Done n'est pas atteint. Ne contourne jamais un échec de gate.",
+    "<chemin evidence-input.json> [--gate]"],
   ["challenge", "Soumettre une proposition aux agents critique et adversarial.",
     "ostack challenge --from <proposition.md>",
-    "Chaque défi bloquant doit être résolu par une preuve exécutée avant de livrer, pas par un argument."],
+    "Chaque défi bloquant doit être résolu par une preuve exécutée avant de livrer, pas par un argument.",
+    "--from <fichier> | \"<proposition>\""],
   ["observe", "Sonder l'application en fonctionnement et produire des preuves.",
     "ostack observe --gate",
-    "Confirme que le comportement réel correspond aux attentes. Cibles loopback sauf allowlist projet."],
+    "Confirme que le comportement réel correspond aux attentes. Cibles loopback sauf allowlist projet.",
+    "[--gate]"],
   ["graph", "Reconstruire et interroger le graphe de traçabilité.",
     "ostack graph rebuild ; ostack graph unverified ; ostack graph why <id>",
-    "Sers-t'en pour savoir quel besoin justifie un fichier, quelles preuves couvrent une règle, et ce qui n'est pas prouvé."],
+    "Sers-t'en pour savoir quel besoin justifie un fichier, quelles preuves couvrent une règle, et ce qui n'est pas prouvé.",
+    "rebuild | unverified | why <id> | impact <id>"],
   ["feature", "Dérouler le workflow vérifié complet d'une fonctionnalité.",
     'ostack feature "<besoin>" --provider <ollama|openai|anthropic>',
-    "Le workflow s'arrête à chaque barrière humaine et donne la commande de reprise. Utilise --provider mock pour un essai déterministe."],
+    "Le workflow s'arrête à chaque barrière humaine et donne la commande de reprise. Utilise --provider mock pour un essai déterministe.",
+    "\"<besoin>\" --provider <ollama|openai|anthropic|mock>"],
   ["domain-create", "Créer un Domain Pack métier à partir de sources.",
     'ostack domain create --name <id> --sources <dossier>',
-    "Le pack naît au niveau 0 (inconnu). Renseigne glossaire, acteurs, règles depuis les sources, puis fais valider par un expert. Ne prétends jamais connaître le métier sans sources."],
+    "Le pack naît au niveau 0 (inconnu). Renseigne glossaire, acteurs, règles depuis les sources, puis fais valider par un expert. Ne prétends jamais connaître le métier sans sources.",
+    "--name <id> [--sector s] [--sources <dossier>]"],
   ["domain-check", "Évaluer les règles métier d'un domaine sur un contexte réel.",
     "ostack domain check <pack.json> --action <action> --context <ctx.json> [--jurisdiction <j>]",
-    "Une règle confirmée bloque; une règle non confirmée escalade vers un humain; une règle d'une autre juridiction est exclue, jamais appliquée en silence."],
+    "Une règle confirmée bloque; une règle non confirmée escalade vers un humain; une règle d'une autre juridiction est exclue, jamais appliquée en silence.",
+    "<pack.json> --action <a> --context <ctx.json> [--jurisdiction <j>]"],
   ["root-cause", "Analyse de cause racine structurée sur le journal d'audit.",
     "ostack root-cause open --incident <id> --symptom \"<symptôme>\"",
-    "Distingue symptôme, cause directe, cause racine, correction, prévention. Le statut 'diagnosed' exige une expérience concluante ET un test de non-régression."],
+    "Distingue symptôme, cause directe, cause racine, correction, prévention. Le statut 'diagnosed' exige une expérience concluante ET un test de non-régression.",
+    "open --incident <id> --symptom \"<symptôme>\""],
   ["decision", "Mémoire des décisions d'ingénierie.",
     'ostack decision search "<sujet>" ; ostack decision record <record.json>',
-    "Cherche TOUJOURS les décisions passées avant de proposer une solution. Les secrets sont masqués à l'enregistrement."],
+    "Cherche TOUJOURS les décisions passées avant de proposer une solution. Les secrets sont masqués à l'enregistrement.",
+    "search \"<sujet>\" | record <record.json>"],
   ["architecture-check", "Vérifier les frontières d'architecture contre le graphe d'imports réel.",
     "ostack architecture check --gate",
-    "Toute dépendance interdite est un blocage de merge. Corrige l'import, ne désactive pas la règle."],
+    "Toute dépendance interdite est un blocage de merge. Corrige l'import, ne désactive pas la règle.",
+    "[--gate]"],
   ["performance", "Établir une baseline et détecter les régressions de performance.",
     "ostack performance baseline --samples 10 ; ostack performance compare --gate",
-    "Une régression p95 au-delà du budget bloque la release. Mesure sur l'application réellement lancée."]
+    "Une régression p95 au-delà du budget bloque la release. Mesure sur l'application réellement lancée.",
+    "baseline | compare [--gate] [--samples N]"]
 ];
 
 function frontMatter(fields) {
@@ -92,10 +106,18 @@ async function main() {
       + "Applique la méthode OStack (skill `ostack-method`). Tout ce qui doit être prouvé passe par la commande `ostack`.\n";
     await writeFile(join(root, "agents", `${name}.md`), body, "utf8");
   }
-  for (const [name, description, invocation, guidance] of COMMANDS) {
-    const body = frontMatter({ name: `ostack:${name}`, description })
-      + `\n# /ostack:${name}\n\n${description}\n\n## Invocation\n\n\`\`\`bash\n${invocation}\n\`\`\`\n\n## Consigne\n\n${guidance}\n\n`
-      + "Ajoute `--json` pour un usage automatisé. Cette commande est adossée aux moteurs déterministes d'OStack : son résultat est une preuve, pas une opinion.\n";
+  for (const [name, description, invocation, guidance, argumentHint] of COMMANDS) {
+    // Frontmatter conforme à Claude Code: `description` + `argument-hint`.
+    // Le nom de la commande vient du chemin du fichier (`/ostack:<name>`),
+    // pas du frontmatter — donc pas de champ `name`.
+    const body = frontMatter({ description, "argument-hint": argumentHint })
+      + `\n# /ostack:${name}\n\n${description}\n\n`
+      + `Arguments reçus : \`$ARGUMENTS\`\n\n`
+      + `## Ce que tu fais\n\n${guidance}\n\n`
+      + `## Invocation de référence\n\n\`\`\`bash\n${invocation}\n\`\`\`\n\n`
+      + `Exécute la commande \`ostack\` correspondante en y intégrant \`$ARGUMENTS\`, ajoute \`--json\` `
+      + `pour parser le résultat, puis présente une synthèse opérationnelle. Cette commande est adossée `
+      + `aux moteurs déterministes d'OStack : son résultat est une preuve, pas une opinion.\n`;
     await writeFile(join(root, "commands", `${name}.md`), body, "utf8");
   }
   console.log(`généré: ${AGENTS.length} agents, ${COMMANDS.length} commandes`);
