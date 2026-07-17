@@ -2,8 +2,8 @@ import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { JsonLinesAuditStore, auditEntry } from "@ostack/core";
 import {
-  branchName, classifyRisk, commitMessage, decideMerge, parseLedger, permittedActions,
-  pullRequestBody, sanitizeEntry, serializeEntry,
+  applyLocalCommit, branchName, classifyRisk, commitMessage, decideMerge, isGitRepo,
+  parseLedger, permittedActions, pullRequestBody, pushBranch, sanitizeEntry, serializeEntry,
   type Checks, type EvolutionProposal, type GitAutonomy, type LedgerEntry
 } from "@ostack/evolution";
 import { configDirectory, loadConfig } from "./config.js";
@@ -79,8 +79,36 @@ export async function runEvolve(context: CommandContext): Promise<unknown> {
       await audit(context, config.project.id, "evolution.propose", { evolutionId: proposal.evolutionId, risk: merge.risk, decision: merge.decision });
       return plan;
     }
+    case "apply": {
+      const input = rest.find((argument) => !argument.startsWith("--"));
+      if (!input) throw new Error("Usage: ostack evolve apply <proposal.json> [--push]");
+      if (autonomy === "observe") throw new Error("gitAutonomy=observe: OStack ne crée pas de commit. Passez à local-commit ou pull-request dans policies/evolution.json.");
+      const proposal = JSON.parse(await readFile(join(context.cwd, input), "utf8")) as EvolutionProposal;
+      const wantsPush = rest.includes("--push");
+      if (wantsPush && autonomy !== "pull-request" && autonomy !== "controlled-auto-merge") {
+        throw new Error(`--push exige gitAutonomy=pull-request; niveau actuel: ${autonomy}`);
+      }
+      if (!(await isGitRepo(context.cwd))) throw new Error("Aucun dépôt git ici; 'evolve apply' exige un dépôt initialisé");
+
+      const branch = branchName(proposal);
+      const applied = await applyLocalCommit({ cwd: context.cwd, branch, changedPaths: proposal.changedPaths, commitMessage: commitMessage(proposal) });
+      let pushed = false;
+      let pushNote: string | undefined;
+      if (wantsPush) {
+        try { await pushBranch(context.cwd, branch); pushed = true; }
+        catch (error) { pushNote = `push non effectué: ${error instanceof Error ? error.message : String(error)}`; }
+      }
+      await audit(context, config.project.id, "evolution.apply", { evolutionId: proposal.evolutionId, branch, commit: applied.commit, pushed });
+      return {
+        status: "applied", ...applied, pushed,
+        ...(pushNote ? { pushNote } : {}),
+        nextStep: pushed
+          ? `Branche poussée. Ouvrez la PR: gh pr create --base main --head ${branch}`
+          : `Commit local créé sur ${branch}. Poussez avec 'ostack evolve apply <proposal> --push' (autonomie pull-request) ou manuellement.`
+      };
+    }
     default:
-      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use status | record | classify | propose`);
+      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use status | record | classify | propose | apply`);
   }
 }
 

@@ -44,7 +44,7 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack root-cause <open\|check\|close> …` | Analyse de cause racine structurée sur le journal d’audit | 1 |
 | `ostack decision <record\|search> …` | Mémoire des décisions d’ingénierie (secrets masqués) | 2 |
 | `ostack learn <observe\|recall\|record>` | Apprentissage: enrichit la base de connaissance (faits sourcés, cross-projets) | 2 |
-| `ostack evolve <status\|record\|classify\|propose>` | Évolution Git-native: ledger, risque et plan de branche/commit/PR (auto-merge faible risque) | 2 |
+| `ostack evolve <status\|record\|classify\|propose\|apply>` | Évolution Git-native: ledger, risque et plan de branche/commit/PR (auto-merge faible risque) | 2 |
 | `ostack mesh settle <runId> [--verified\|--failed]` | Convertit le ledger de coûts réels en statistiques après verdict | 2 |
 
 Une commande ne change jamais de niveau parce qu’un agent le demande. Une action de production issue de `release` reste de niveau 4 et exige une approbation humaine explicite.

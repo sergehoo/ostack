@@ -41,7 +41,15 @@ ostack evolve status                       # ledger, autonomie, candidats
 ostack evolve record <event.json>          # ajoute un événement (secrets masqués)
 ostack evolve classify --paths a,b,c        # risque d'un ensemble de chemins
 ostack evolve propose <proposal.json>       # plan Git déterministe + décision (AUTO_MERGE|PULL_REQUEST|REQUIRE_HUMAN)
+ostack evolve apply <proposal.json> [--push]  # exécute le commit LOCAL (git réel), push gardé
 ```
+
+`apply` exécute réellement la partie **locale et réversible** : crée la branche
+`ostack/evolution/<id>`, stage **uniquement** les chemins explicites (jamais `git add .`, §11),
+commit avec l'identité bot appliquée par-commit (§26, n'écrase pas l'identité git de l'utilisateur).
+`--push` n'est autorisé qu'à l'autonomie `pull-request`+ et passe par `assertGitOperationAllowed`
+(jamais force, jamais branche protégée). Sans autonomie suffisante ou hors dépôt git, `apply`
+refuse proprement.
 
 `propose` **planifie et décide** ; il n'exécute aucune opération Git réseau. Il rend la branche, le
 message de commit, le titre/corps de PR, la décision de fusion et **les commandes git/gh exactes** à
