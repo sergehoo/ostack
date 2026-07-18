@@ -76,3 +76,27 @@ mais volontairement non câblée en exécution automatique tant que : credential
 identité Git bot signée, et protections de branche vérifiées ne sont pas configurés par
 l'organisation. Le moteur de décision, les garde-fous et le plan sont livrés et testés ; brancher
 l'exécution se fait en connectant un runner autorisé aux commandes que `propose` émet déjà.
+
+## Synchronisation des ressources (§19-20)
+
+Un **dépôt de connaissances dédié** (`ostack-knowledge`) porte les ressources évolutives, séparé du
+dépôt moteur. Configuré dans `.ostack/config.json` :
+
+```json
+"knowledgeRepository": {
+  "remote": "git@github.com:org/ostack-knowledge.git",
+  "branch": "main", "localPath": ".ostack/knowledge-repository",
+  "syncOnStart": true, "pushOnVerifiedLearning": true
+}
+```
+
+```bash
+ostack sync status   # branche, propreté, avance/retard
+ostack sync pull     # fast-forward ONLY (une branche divergée n'est jamais fusionnée en silence)
+ostack sync push     # exige pushOnVerifiedLearning; jamais de force push
+ostack sync verify   # clone propre et à jour ?
+```
+
+`pull` est fast-forward-only et refuse un arbre non propre plutôt que d'écraser des changements
+locaux. `push` ne force jamais ; la protection de la branche partagée est assurée côté GitHub
+(branch protection / PR obligatoires, §16). Testé de bout en bout avec un remote bare local.

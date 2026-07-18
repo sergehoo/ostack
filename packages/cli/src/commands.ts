@@ -54,6 +54,7 @@ export const commands: Record<string, { description: string; handler: CommandHan
   decision: { description: "Mémoire des décisions d’ingénierie (record, search)", handler: async (context) => (await import("./decisions.js")).runDecision(context) },
   learn: { description: "Apprentissage institutionnel: enrichit la base de connaissance (observe, recall, record)", handler: async (context) => (await import("./learn.js")).runLearn(context) },
   evolve: { description: "Autonomous Evolution Engine: ledger, classification de risque et plan Git (status, record, classify, propose)", handler: async (context) => (await import("./evolve.js")).runEvolve(context) },
+  sync: { description: "Synchronise le dépôt de connaissances (status, pull, push, verify)", handler: async (context) => (await import("./sync.js")).runSync(context) },
   update: { description: "Vérifier et appliquer une mise à jour OStack", handler: notYetAutomated("update", "self-update") }
 };
 

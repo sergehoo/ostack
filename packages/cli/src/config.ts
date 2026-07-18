@@ -20,6 +20,13 @@ export interface OStackConfig {
     candidates: Array<{ id: string; provider: string; model: string; local: boolean }>;
     routes: Array<{ taskType: string; strategy: "quality_first" | "cost_per_verified_result" | "privacy_first" | "independent_consensus"; candidates: string[]; requiredIndependentModels?: number }>;
   };
+  knowledgeRepository?: {
+    remote: string;
+    branch: string;
+    localPath: string;
+    syncOnStart?: boolean;
+    pushOnVerifiedLearning?: boolean;
+  };
   plugins: string[];
 }
 
