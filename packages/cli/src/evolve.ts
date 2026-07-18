@@ -1,11 +1,13 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { appendFile, mkdir, readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { JsonLinesAuditStore, auditEntry } from "@ostack/core";
 import {
   applyLocalCommit, branchName, classifyRisk, commitMessage, decideMerge, evaluateCandidate, isGitRepo,
   parseLedger, permittedActions, pullRequestBody, pushBranch, sanitizeEntry, serializeEntry,
-  type Checks, type EvolutionProposal, type GitAutonomy, type LedgerEntry, type SkillMetrics
+  type Checks, type EvolutionProposal, type ExperienceType, type GitAutonomy, type LedgerEntry, type SkillMetrics
 } from "@ostack/evolution";
+import { deriveLessons, type LessonKind } from "@ostack/learning";
 import { configDirectory, loadConfig } from "./config.js";
 import type { CommandContext } from "./commands.js";
 
@@ -36,6 +38,41 @@ export async function runEvolve(context: CommandContext): Promise<unknown> {
         ledgerEvents: entries.length,
         byStatus,
         candidates: entries.filter((entry) => entry.status === "CANDIDATE").map((entry) => ({ eventId: entry.eventId, lesson: entry.lesson, proposedResource: entry.proposedResource }))
+      };
+    }
+    case "collect": {
+      // Experience Collector + Lesson Extractor (§6-7): derive CANDIDATE
+      // learnings from the project's real artifacts and append them to the
+      // ledger. Deterministic (stable eventId per lesson → idempotent),
+      // secret-free, project-scoped (§9 — never universal from collection).
+      const now = new Date().toISOString();
+      const state = configDirectory(context.cwd);
+      const derived = deriveLessons({
+        project: config.project.id, now,
+        evidencePacks: await readJsonDir(join(state, "evidence")),
+        deliberations: await readJsonDir(join(state, "deliberations")),
+        intents: await readJsonDir(join(state, "intents"))
+      });
+      const existing = await readLedger(ledgerPath);
+      const seen = new Set(existing.map((entry) => entry.eventId));
+      const added: LedgerEntry[] = [];
+      for (const lesson of derived) {
+        const mapped = mapLessonToLedger(lesson.kind, lesson.statement, lesson.sources, lesson.count, config.project.id, now);
+        if (!mapped || seen.has(mapped.eventId)) continue;
+        seen.add(mapped.eventId);
+        added.push(mapped);
+      }
+      if (added.length > 0) {
+        await mkdir(join(state, "evolution"), { recursive: true, mode: 0o700 });
+        await appendFile(ledgerPath, added.map((entry) => serializeEntry(entry)).join("\n") + "\n", { encoding: "utf8", mode: 0o600 });
+        await audit(context, config.project.id, "evolution.collect", { candidates: added.length });
+      }
+      return {
+        status: "collected",
+        candidatesAdded: added.length,
+        alreadyKnown: derived.length - added.length,
+        candidates: added.map((entry) => ({ eventId: entry.eventId, lesson: entry.lesson, proposedResource: entry.proposedResource, confidence: entry.confidence })),
+        note: "Nouveaux candidats au statut CANDIDATE, portée projet. La promotion exige reproduction, preuves et vérification indépendante (§8)."
       };
     }
     case "record": {
@@ -165,6 +202,39 @@ function defaultChecks(proposal: EvolutionProposal): Checks {
 
 async function readLedger(path: string): Promise<LedgerEntry[]> {
   try { return parseLedger(await readFile(path, "utf8")); } catch { return []; }
+}
+
+// Maps a factual lesson to a ledger CANDIDATE, choosing a proposed resource
+// path by kind. Only actionable kinds become candidates; usage stats do not.
+function mapLessonToLedger(kind: LessonKind, statement: string, sources: string[], count: number, project: string, now: string): LedgerEntry | undefined {
+  const mapping: Partial<Record<LessonKind, { dir: string; experienceType: ExperienceType }>> = {
+    blocking_challenge: { dir: "anti-patterns/verification", experienceType: "other" },
+    residual_risk: { dir: "lessons/risks", experienceType: "security" },
+    recurring_invariant: { dir: "patterns/invariants", experienceType: "feature" }
+  };
+  const target = mapping[kind];
+  if (!target) return undefined;
+  const slug = statement.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "lesson";
+  const eventId = `EVL-${createHash("sha256").update(`${kind}:${slug}:${project}`).digest("hex").slice(0, 12)}`;
+  // Confidence rises modestly with repeated observation but never reaches the
+  // promotion bar (§8): collected candidates stay CANDIDATE until reproduced.
+  const confidence = Math.min(0.5 + 0.1 * Math.max(0, count - 1), 0.85);
+  return {
+    eventId, timestamp: now, project, taskId: "collected",
+    experienceType: target.experienceType, outcome: "observed",
+    lesson: statement, scope: `project:${project}`, confidence,
+    evidence: sources, proposedResource: `${target.dir}/${slug}.md`, status: "CANDIDATE"
+  };
+}
+
+async function readJsonDir<T>(directory: string): Promise<T[]> {
+  let names: string[];
+  try { names = (await readdir(directory)).filter((name) => name.endsWith(".json")); } catch { return []; }
+  const documents: T[] = [];
+  for (const name of names.sort()) {
+    try { documents.push(JSON.parse(await readFile(join(directory, name), "utf8")) as T); } catch { /* skip */ }
+  }
+  return documents;
 }
 
 function readFlag(args: string[], flag: string): string | undefined {

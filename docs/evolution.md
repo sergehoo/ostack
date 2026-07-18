@@ -37,6 +37,7 @@ toutes les politiques. L'automatisation ne peut jamais contourner ses propres ga
 ## Commandes
 
 ```bash
+ostack evolve collect                      # dérive des candidats CANDIDATE des artefacts réels
 ostack evolve status                       # ledger, autonomie, candidats
 ostack evolve record <event.json>          # ajoute un événement (secrets masqués)
 ostack evolve classify --paths a,b,c        # risque d'un ensemble de chemins

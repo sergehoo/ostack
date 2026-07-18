@@ -44,7 +44,7 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack root-cause <open\|check\|close> …` | Analyse de cause racine structurée sur le journal d’audit | 1 |
 | `ostack decision <record\|search> …` | Mémoire des décisions d’ingénierie (secrets masqués) | 2 |
 | `ostack learn <observe\|recall\|record>` | Apprentissage: enrichit la base de connaissance (faits sourcés, cross-projets) | 2 |
-| `ostack evolve <status\|record\|classify\|propose\|apply\|evaluate>` | Évolution Git-native: ledger, risque et plan de branche/commit/PR (auto-merge faible risque) | 2 |
+| `ostack evolve <collect\|status\|record\|classify\|propose\|apply\|evaluate>` | Évolution Git-native: ledger, risque et plan de branche/commit/PR (auto-merge faible risque) | 2 |
 | `ostack sync <status\|pull\|push\|verify>` | Synchronise le dépôt de connaissances (pull fast-forward-only, push gardé) | 2 |
 | `ostack mesh settle <runId> [--verified\|--failed]` | Convertit le ledger de coûts réels en statistiques après verdict | 2 |
 
