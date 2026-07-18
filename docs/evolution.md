@@ -100,3 +100,17 @@ ostack sync verify   # clone propre et à jour ?
 `pull` est fast-forward-only et refuse un arbre non propre plutôt que d'écraser des changements
 locaux. `push` ne force jamais ; la protection de la branche partagée est assurée côté GitHub
 (branch protection / PR obligatoires, §16). Testé de bout en bout avec un remote bare local.
+
+## Auto-évaluation avant promotion (§22)
+
+Une candidate est mesurée contre la baseline sur le **même** benchmark avant d'être promue :
+
+```bash
+ostack evolve evaluate --baseline baseline.json --candidate candidate.json [--fixes-defect]
+```
+
+Règle non négociable : une évolution n'est **jamais** promue sur sa seule pertinence. Elle doit
+démontrer une amélioration mesurée du taux de réussite vérifié, **ou** corriger un défaut prouvé —
+et introduire **zéro régression**. Toute régression, ou une dégradation du taux de réussite, donne
+`reject` ; l'égalité sans défaut corrigé donne `inconclusive` ; l'amélioration mesurée (ou le
+correctif prouvé sans régression) donne `promote`. Latence et coût sont rapportés en delta.

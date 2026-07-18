@@ -2,9 +2,9 @@ import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { JsonLinesAuditStore, auditEntry } from "@ostack/core";
 import {
-  applyLocalCommit, branchName, classifyRisk, commitMessage, decideMerge, isGitRepo,
+  applyLocalCommit, branchName, classifyRisk, commitMessage, decideMerge, evaluateCandidate, isGitRepo,
   parseLedger, permittedActions, pullRequestBody, pushBranch, sanitizeEntry, serializeEntry,
-  type Checks, type EvolutionProposal, type GitAutonomy, type LedgerEntry
+  type Checks, type EvolutionProposal, type GitAutonomy, type LedgerEntry, type SkillMetrics
 } from "@ostack/evolution";
 import { configDirectory, loadConfig } from "./config.js";
 import type { CommandContext } from "./commands.js";
@@ -107,8 +107,26 @@ export async function runEvolve(context: CommandContext): Promise<unknown> {
           : `Commit local créé sur ${branch}. Poussez avec 'ostack evolve apply <proposal> --push' (autonomie pull-request) ou manuellement.`
       };
     }
+    case "evaluate": {
+      // Compare a candidate's measured metrics to the baseline before promotion.
+      const baselinePath = readFlag(rest, "--baseline");
+      const candidatePath = readFlag(rest, "--candidate");
+      if (!baselinePath || !candidatePath) throw new Error("Usage: ostack evolve evaluate --baseline <baseline.json> --candidate <candidate.json> [--fixes-defect]");
+      const baseline = JSON.parse(await readFile(join(context.cwd, baselinePath), "utf8")) as SkillMetrics;
+      const candidate = JSON.parse(await readFile(join(context.cwd, candidatePath), "utf8")) as SkillMetrics;
+      const result = evaluateCandidate(baseline, candidate, rest.includes("--fixes-defect") ? { fixesProvenDefect: true } : {});
+      await audit(context, config.project.id, "evolution.evaluate", { recommendation: result.recommendation, regressions: result.regressions });
+      return {
+        recommendation: result.recommendation,
+        promotable: result.recommendation === "promote",
+        regressions: result.regressions,
+        deltas: result.deltas,
+        reasons: result.reasons,
+        note: "Une évolution n'est promue que si elle démontre une amélioration ou corrige un défaut prouvé, sans régression (§22)."
+      };
+    }
     default:
-      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use status | record | classify | propose | apply`);
+      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use status | record | classify | propose | apply | evaluate`);
   }
 }
 
@@ -147,6 +165,11 @@ function defaultChecks(proposal: EvolutionProposal): Checks {
 
 async function readLedger(path: string): Promise<LedgerEntry[]> {
   try { return parseLedger(await readFile(path, "utf8")); } catch { return []; }
+}
+
+function readFlag(args: string[], flag: string): string | undefined {
+  const index = args.indexOf(flag);
+  return index === -1 ? undefined : args[index + 1];
 }
 
 function readList(args: string[], flag: string): string[] {
