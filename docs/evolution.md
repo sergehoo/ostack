@@ -71,13 +71,12 @@ build, lint, tests, `validate:evolution` (ledger sans secret + garde-fous en pla
 `security:secrets`. Les protections de branche GitHub + ces checks obligatoires garantissent que
 l'automatisation ne contourne pas les validations.
 
-## Ce qui reste à M2 (documenté, pas caché)
+## Exécution réseau
 
-L'exécution réseau (push réel, création de PR via `gh`, auto-merge) est **planifiée** par le moteur
-mais volontairement non câblée en exécution automatique tant que : credentials sécurisés,
-identité Git bot signée, et protections de branche vérifiées ne sont pas configurés par
-l'organisation. Le moteur de décision, les garde-fous et le plan sont livrés et testés ; brancher
-l'exécution se fait en connectant un runner autorisé aux commandes que `propose` émet déjà.
+L'exécution réseau est **câblée et gardée** (`ostack evolve pr` / `ostack evolve merge`, voir plus
+bas). Elle s'active dès que GitHub CLI est authentifié et que la protection de branche est posée
+(`scripts/setup-branch-protection.sh`). Le token reste géré par `gh` — OStack ne le voit jamais.
+La première PR/merge réels s'exécutent dans un environnement `gh` authentifié.
 
 ## Synchronisation des ressources (§19-20)
 
