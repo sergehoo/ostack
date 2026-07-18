@@ -213,8 +213,41 @@ export async function runEvolve(context: CommandContext): Promise<unknown> {
         nextStep: `Fichier ressource matérialisé. Committez-le via 'ostack evolve propose' puis 'ostack evolve apply' (chemins: ${entry.proposedResource}, .ostack/evolution/ledger.jsonl).`
       };
     }
+    case "pr": {
+      // §7 network execution: open a PR from a pushed evolution branch.
+      if (autonomy !== "pull-request" && autonomy !== "controlled-auto-merge") {
+        throw new Error(`gitAutonomy=${autonomy}: l'ouverture de PR exige pull-request ou controlled-auto-merge.`);
+      }
+      const branch = readFlag(rest, "--branch");
+      const bodyFile = readFlag(rest, "--body-file");
+      const title = readFlag(rest, "--title");
+      if (!branch || !bodyFile || !title) throw new Error("Usage: ostack evolve pr --branch <b> --title <t> --body-file <f>");
+      const base = readFlag(rest, "--base") ?? (config as { evolution?: { git?: { baseBranch?: string } } }).evolution?.git?.baseBranch ?? "main";
+      const { createPullRequest } = await import("./evolve-network.js");
+      const result = await createPullRequest({ cwd: context.cwd, branch, base, title, bodyFile });
+      await audit(context, config.project.id, "evolution.pr", { branch, base });
+      return { status: "pr_created", url: result.url };
+    }
+    case "merge": {
+      // §7/§16 auto-merge: gated to low risk + no guardrail path + confidence;
+      // GitHub branch protection is the real gate. Requires controlled-auto-merge.
+      if (autonomy !== "controlled-auto-merge") {
+        throw new Error(`gitAutonomy=${autonomy}: l'auto-merge exige gitAutonomy=controlled-auto-merge dans policies/evolution.json.`);
+      }
+      const pr = readFlag(rest, "--pr");
+      const branch = readFlag(rest, "--branch");
+      const paths = readList(rest, "--paths");
+      if (!pr || !branch || paths.length === 0) throw new Error("Usage: ostack evolve merge --pr <url|n> --branch <b> --paths <a,b,c> [--confidence 0.94]");
+      const confidence = Number(readFlag(rest, "--confidence") ?? 0);
+      const confidenceMinimum = (config as { evolution?: { autoMerge?: { confidenceMinimum?: number } } }).evolution?.autoMerge?.confidenceMinimum ?? 0.92;
+      const { enableAutoMerge } = await import("./evolve-network.js");
+      const outcome = await enableAutoMerge({ cwd: context.cwd, pr, branch, changedPaths: paths, confidence, confidenceMinimum });
+      await audit(context, config.project.id, outcome.enabled ? "evolution.auto_merge_enabled" : "evolution.auto_merge_refused", { pr, refused: outcome.refused });
+      if (!outcome.enabled) return { status: "refused", reason: outcome.refused };
+      return { status: "auto_merge_enabled", pr, note: "GitHub fusionnera après réussite des checks obligatoires et satisfaction des protections de branche (§16)." };
+    }
     default:
-      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use collect | status | record | classify | propose | apply | evaluate | promote`);
+      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use collect | status | record | classify | propose | apply | evaluate | promote | pr | merge`);
   }
 }
 

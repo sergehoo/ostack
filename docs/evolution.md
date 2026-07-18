@@ -136,3 +136,25 @@ automatiquement** le point de restauration si la vérification échoue (`rollbac
 rollback ne vise qu'un commit connu du dépôt. Testé de bout en bout avec un remote bare local.
 
 Config (`.ostack/config.json`) : `updates: { channel: "stable", rollbackOnFailure: true }`.
+
+## Exécution réseau de l'auto-merge (§7, §16)
+
+Le maillon réseau est câblé et **gardé**, prêt dès que GitHub CLI est authentifié :
+
+```bash
+# 1) Une fois, après `gh auth login` — pose la VRAIE barrière (§16):
+bash scripts/setup-branch-protection.sh sergehoo/ostack main
+#    → PR obligatoire, checks CI stricts, pas de force push ni suppression, auto-merge activé.
+
+# 2) Flux d'évolution à faible risque (gitAutonomy=controlled-auto-merge):
+ostack evolve apply <proposal.json> --push          # branche + commit local + push gardé
+ostack evolve pr --branch <b> --title <t> --body-file <f>
+ostack evolve merge --pr <url> --branch <b> --paths <a,b,c> --confidence 0.94
+```
+
+`gh` gère le token via le gestionnaire d'identifiants sécurisé du système — **OStack ne le voit
+jamais**. `evolve merge` refuse avant tout appel réseau si le risque n'est pas faible, si un chemin
+garde-fou est touché (§32), ou si la confiance est insuffisante ; il active `gh pr merge --auto`, si
+bien que **GitHub ne fusionne qu'après réussite des checks obligatoires et satisfaction des
+protections de branche** — l'automatisation ne peut pas les contourner. Aucun force push, jamais de
+merge direct sur une branche protégée.
