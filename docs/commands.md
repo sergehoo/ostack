@@ -16,7 +16,7 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack document` | Génère la documentation traçable | 2 |
 | `ostack release` | Prépare version, migration, déploiement et rollback | 3 |
 | `ostack doctor` | Vérifie l’installation et le projet | 1 |
-| `ostack update` | Prépare la mise à jour du framework | 3 |
+| `ostack update [--check\|--rollback\|--channel <c>]` | Met à jour le framework (point de restauration, fast-forward, rollback sur échec) | 3 |
 | `ostack change <plan.json>` | Prévisualise un plan sans modifier le projet | 1 |
 | `ostack change <plan.json> --confirm <hash> --reason <raison>` | Applique le plan, contrôle la qualité et rollback si nécessaire | 3 |
 | `ostack intent-compile <besoin> [--provider …] \| --from <draft.json>` | Compile une demande en invariants, propriétés Gherkin et preuves attendues | 2 |

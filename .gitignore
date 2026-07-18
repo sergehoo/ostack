@@ -31,3 +31,4 @@ coverage/
 .ostack/evolution/
 .ostack/runs/*/raw-logs/
 .ostack/sandboxes/
+.ostack/update/

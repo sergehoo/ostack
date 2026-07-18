@@ -114,3 +114,23 @@ démontrer une amélioration mesurée du taux de réussite vérifié, **ou** cor
 et introduire **zéro régression**. Toute régression, ou une dégradation du taux de réussite, donne
 `reject` ; l'égalité sans défaut corrigé donne `inconclusive` ; l'amélioration mesurée (ou le
 correctif prouvé sans régression) donne `promote`. Latence et coût sont rapportés en delta.
+
+## Mise à jour du framework (§21)
+
+`ostack update` met à jour le framework OStack depuis son remote git, avec **point de restauration**
+et **rollback automatique** si la vérification post-mise-à-jour échoue.
+
+```bash
+ostack update --check                 # y a-t-il une mise à jour ? (sans installer)
+ostack update                         # point de restauration → fast-forward → build/typecheck → rollback si échec
+ostack update --rollback              # restaure le dernier point de restauration
+ostack update --channel <stable|beta> # choisit la branche (stable=main)
+```
+
+Séquence : enregistre le HEAD courant comme point de restauration
+(`.ostack/update/restore-point.json`), applique une mise à jour **fast-forward only** (un dépôt
+divergé ou un arbre non propre est refusé, jamais écrasé), exécute `npm run check`, et **restaure
+automatiquement** le point de restauration si la vérification échoue (`rollbackOnFailure`). Le
+rollback ne vise qu'un commit connu du dépôt. Testé de bout en bout avec un remote bare local.
+
+Config (`.ostack/config.json`) : `updates: { channel: "stable", rollbackOnFailure: true }`.
