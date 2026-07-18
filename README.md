@@ -96,7 +96,12 @@ docs/          architecture et guides
 tests/         futurs tests transverses/E2E
 ```
 
-Voir [l’architecture](docs/architecture/README.md), le [modèle de données](docs/data-model.md), les [commandes](docs/commands.md) et la [feuille de route](docs/roadmap.md).
+## Documentation
+
+- [Architecture](docs/architecture/README.md) · [Modèle de données](docs/data-model.md) · [Commandes](docs/commands.md) · [Feuille de route](docs/roadmap.md)
+- [Preuve logicielle](docs/evidence.md) · [Chaîne d'ingénierie vérifiée](docs/verified-engineering.md) · [Intelligence d'ingénierie](docs/engineering-intelligence.md)
+- [Intelligence métier universelle](docs/universal-domain.md) · [Apprentissage automatique](docs/learning.md) · [Évolution autonome Git-native](docs/evolution.md)
+- [Framework installable](docs/framework.md) · [Préparation production](docs/production-readiness.md) · [Fournisseurs](docs/providers.md) · [Isolation](docs/isolation.md)
 
 ## Licence
 

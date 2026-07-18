@@ -4,7 +4,28 @@
 
 Contrats du noyau, CLI, sécurité quatre niveaux, audit local, événements, orchestrateur, workflow déclaratif, connaissance locale, catalogue d’agents, SDK plugins, API en lecture, dashboard et tests essentiels.
 
-## M1 — Developer preview (en cours)
+## État actuel (2026-07-18)
+
+29 packages, 33 commandes CLI, 159 tests verts, typecheck et lint propres, doctor sain (18 contrôles),
+validateurs d'évolution et de secrets au vert. `npm run self-prove` : `VERIFIED · APPROVE_WITH_OBSERVATIONS`,
+confiance 83. Publié sur [github.com/sergehoo/ostack](https://github.com/sergehoo/ostack).
+
+Également livré depuis : framework installable dans les projets (`ostack install` pour Claude Code /
+Cursor / Codex — commandes `/ostack:*`, agents, skill de méthode, standards, workflows) ; apprentissage
+automatique cross-projets (`ostack learn`, faits sourcés jamais inventés, hook de session) ; et
+l'**Autonomous Git-Native Evolution Engine** (`@ostack/evolution` + `ostack evolve`, `ostack sync`,
+`ostack update`) : ledger sans secret, extraction/classification de leçons, pipeline de promotion
+OBSERVED→…→PROMOTED avec matérialisation en fichier versionné, classification de risque, plan Git
+(branche/commit/PR), exécution locale réelle du commit, auto-évaluation avant promotion, sync du dépôt
+de connaissances et self-update avec point de restauration/rollback. Tous les garde-fous non
+négociables (§35) codés et testés (pas de force push, pas de push direct sur main, auto-merge réservé
+au faible risque, l'auto-évolution ne peut pas réduire ses propres garde-fous).
+
+Seul élément d'évolution non câblé, par sûreté : l'**exécution réseau de l'auto-merge** (§7) — le
+moteur de décision, le plan et `evolve apply --push` sont prêts ; les activer exige un remote autorisé,
+un token à portée limitée et des protections de branche configurés côté organisation (§16).
+
+## M1 — Developer preview
 
 Livré : adaptateurs OpenAI/Anthropic/Ollama, stockage SQLite, checkpoints/reprise, serveur MCP en lecture seule, découverte locale, validation JSON Schema, sandbox fichiers réversible, plans confirmés, validation en copie éphémère, workflow feature avec barrières humaines, le noyau Proof-Carrying Software (Evidence Pack, Confidence Score, Quality Budget, Definition of Done), l'Intent-to-Proof Compiler, le Knowledge Graph de traçabilité, le jumeau numérique avec détection de dérive, la délibération multi-agents à arbitrage par preuves et l'Adaptive Model Mesh.
 
