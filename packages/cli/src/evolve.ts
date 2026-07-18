@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
-import { appendFile, mkdir, readFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { appendFile, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { JsonLinesAuditStore, auditEntry } from "@ostack/core";
 import {
-  applyLocalCommit, branchName, classifyRisk, commitMessage, decideMerge, evaluateCandidate, isGitRepo,
+  applyLocalCommit, branchName, classifyRisk, commitMessage, decideMerge, evaluateCandidate, evaluatePromotion, isGitRepo,
   parseLedger, permittedActions, pullRequestBody, pushBranch, sanitizeEntry, serializeEntry,
-  type Checks, type EvolutionProposal, type ExperienceType, type GitAutonomy, type LedgerEntry, type SkillMetrics
+  type Checks, type EvolutionProposal, type ExperienceType, type GitAutonomy, type LedgerEntry, type Scope, type SkillMetrics
 } from "@ostack/evolution";
 import { deriveLessons, type LessonKind } from "@ostack/learning";
 import { configDirectory, loadConfig } from "./config.js";
@@ -162,8 +162,59 @@ export async function runEvolve(context: CommandContext): Promise<unknown> {
         note: "Une évolution n'est promue que si elle démontre une amélioration ou corrige un défaut prouvé, sans régression (§22)."
       };
     }
+    case "promote": {
+      // Applies the promotion gate (§8) to a ledger CANDIDATE and, if eligible,
+      // MATERIALIZES the knowledge into a versioned resource file (§2). Refuses
+      // honestly while reproduction / evidence / independent verification are
+      // missing — never promoted on relevance alone.
+      const eventId = readFlag(rest, "--event");
+      if (!eventId) throw new Error("Usage: ostack evolve promote --event <eventId> [--reproduced] [--independent-verification] [--observations N]");
+      const entries = await readLedger(ledgerPath);
+      const entry = [...entries].reverse().find((item) => item.eventId === eventId && item.status !== "PROMOTED" && item.status !== "DEPRECATED");
+      if (!entry) throw new Error(`Aucun candidat promouvable pour l'événement ${eventId}`);
+
+      const scope = parseScope(entry.scope);
+      const signals = {
+        observations: Number(readFlag(rest, "--observations") ?? 1),
+        distinctProjects: scope.type === "project" ? 1 : 2,
+        reproduced: rest.includes("--reproduced"),
+        confidence: entry.confidence,
+        hasEvidence: entry.evidence.length > 0,
+        contradicted: false,
+        independentVerification: rest.includes("--independent-verification")
+      };
+      const decision = evaluatePromotion(entry.status, scope, signals);
+      if (!decision.eligibleForPromotion) {
+        return { status: "not_promoted", eventId, current: entry.status, next: decision.next, blockers: decision.blockers, note: "Une connaissance n'est promue qu'avec reproduction, preuves et vérification indépendante (§8)." };
+      }
+
+      const resourcePath = containedResource(context.cwd, entry.proposedResource);
+      const now = new Date().toISOString();
+      const frontMatter = [
+        "---",
+        `id: ${entry.eventId}`,
+        "status: promoted",
+        `scope: ${entry.scope}`,
+        `confidence: ${entry.confidence}`,
+        `experienceType: ${entry.experienceType}`,
+        `evidence: [${entry.evidence.map((source) => JSON.stringify(source)).join(", ")}]`,
+        `promotedAt: ${now}`,
+        "---", ""
+      ].join("\n");
+      await mkdir(join(resourcePath, ".."), { recursive: true });
+      await writeFile(resourcePath, `${frontMatter}${entry.lesson}\n`, { encoding: "utf8" });
+
+      // Append a PROMOTED event referencing the same lesson (ledger is append-only).
+      const promotedEvent: LedgerEntry = { ...entry, timestamp: now, status: "PROMOTED" };
+      await appendFile(ledgerPath, `${serializeEntry(promotedEvent)}\n`, { encoding: "utf8", mode: 0o600 });
+      await audit(context, config.project.id, "evolution.promote", { eventId, resource: entry.proposedResource });
+      return {
+        status: "promoted", eventId, resource: entry.proposedResource,
+        nextStep: `Fichier ressource matérialisé. Committez-le via 'ostack evolve propose' puis 'ostack evolve apply' (chemins: ${entry.proposedResource}, .ostack/evolution/ledger.jsonl).`
+      };
+    }
     default:
-      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use status | record | classify | propose | apply | evaluate`);
+      throw new Error(`Unknown evolve subcommand '${subcommand}'. Use collect | status | record | classify | propose | apply | evaluate | promote`);
   }
 }
 
@@ -240,6 +291,27 @@ async function readJsonDir<T>(directory: string): Promise<T[]> {
 function readFlag(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   return index === -1 ? undefined : args[index + 1];
+}
+
+function parseScope(raw: string): Scope {
+  const [type, value] = raw.split(":");
+  if (type === "domain") return { type: "domain", ...(value ? { domain: value } : {}) };
+  if (type === "technology") return { type: "technology", ...(value ? { technology: value } : {}) };
+  if (type === "organization") return { type: "organization" };
+  if (type === "universal") return { type: "universal" };
+  return { type: "project" };
+}
+
+// Materialized resources must land inside the project, under a known evolvable
+// directory — never outside, never a protected path.
+function containedResource(root: string, resource: string): string {
+  const absolute = isAbsolute(resource) ? resource : resolve(root, resource);
+  const relation = relative(root, absolute);
+  if (relation === ".." || relation.startsWith(`..${sep}`) || isAbsolute(relation)) throw new Error("La ressource doit être dans le projet");
+  if (!/^(patterns|anti-patterns|lessons|skills|standards|domain-packs|knowledge)\//.test(relation)) {
+    throw new Error(`Ressource hors des répertoires évolutifs autorisés: ${relation}`);
+  }
+  return absolute;
 }
 
 function readList(args: string[], flag: string): string[] {

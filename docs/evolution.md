@@ -41,6 +41,7 @@ ostack evolve collect                      # dérive des candidats CANDIDATE des
 ostack evolve status                       # ledger, autonomie, candidats
 ostack evolve record <event.json>          # ajoute un événement (secrets masqués)
 ostack evolve classify --paths a,b,c        # risque d'un ensemble de chemins
+ostack evolve promote --event <id>         # promeut un candidat VALIDATED → fichier ressource versionné
 ostack evolve propose <proposal.json>       # plan Git déterministe + décision (AUTO_MERGE|PULL_REQUEST|REQUIRE_HUMAN)
 ostack evolve apply <proposal.json> [--push]  # exécute le commit LOCAL (git réel), push gardé
 ```
