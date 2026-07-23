@@ -117,6 +117,9 @@ export async function runDomain(context: CommandContext): Promise<unknown> {
       const packs = await Promise.all(rest.map((path) => loadPack(context.cwd, path)));
       return { domains: packs.map((pack) => pack.id), analysis: analyzeCrossDomain(packs) };
     }
+    case "agents": {
+      return (await import("./domain-agents.js")).runDomainAgents({ ...context, args: rest });
+    }
     default:
       throw new Error(`Unknown domain subcommand '${subcommand ?? ""}'. Use create | score | validate | check | scenarios | cross`);
   }
