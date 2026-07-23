@@ -39,6 +39,8 @@ ostack list
 ostack inspect architecture-check
 ostack run architecture-check --dry-run
 ostack run architecture-check --input "Vérifier la nouvelle frontière" --provider ollama
+ostack run-all --input "Appliquer toute la méthode OStack au projet"
+ostack run-all --input @request.md --execute --provider ollama
 ```
 
 Voir [le runtime de commandes indépendant](docs/command-runtime.md) pour les alias, les Domain Packs,
@@ -91,6 +93,7 @@ Le dashboard est disponible sur `http://127.0.0.1:4320` et l’API sur `http://1
 - **Apprentissage automatique** : la base de connaissance s'enrichit toute seule des commandes, preuves, délibérations et projets (`ostack learn`), en faits sourcés cross-projets, jamais inventés. Voir [l'apprentissage](docs/learning.md).
 - **Framework installable** : `ostack install` dépose commandes `/ostack:*`, agents, skill de méthode, standards et workflows directement dans le projet, au format Claude Code / Cursor / Codex. Léger dans le projet, vérifiable via la commande `ostack`. Voir [le framework](docs/framework.md).
 - **Runtime de commandes indépendant** : `ostack list`, `ostack inspect` et `ostack run` découvrent et exécutent les commandes installées et celles des Domain Packs via le fournisseur configuré, avec dry-run, validation, timeout et journal non sensible.
+- **Cycle global de skills** : `ostack run-all` assemble tous les skills projet dans un seul contexte, prévisualise par défaut, sélectionne explicitement les Domain Packs et effectue un appel fournisseur unique avec traçabilité par skill.
 - **Proof-Carrying Software** : noyau de vérification déterministe (Evidence Pack, Confidence Score, Quality Budget, Definition of Done) et commandes `prove`, `verify --gate`, `confidence`. Voir [la preuve logicielle](docs/evidence.md).
 - **Chaîne d'ingénierie vérifiée** : Intent-to-Proof Compiler (`intent-compile`), Knowledge Graph de traçabilité (`graph`), jumeau numérique avec détection de dérive (`drift`), délibération multi-agents à arbitrage par preuves (`challenge`), Model Mesh routé au coût par résultat vérifié, observation runtime (`observe`), Functional Testing Studio (matrice de permissions) et Authorized Security Lab défensif (`security-lab`). Voir [la chaîne vérifiée](docs/verified-engineering.md).
 - **Intelligence d'ingénierie** : boucle de vérification autonome à budgets durs, Performance Intelligence (baseline/régression), Architecture Intelligence (frontières vérifiées, appliquées à OStack lui-même), analyse de cause racine et mémoire des décisions. Voir [l'intelligence d'ingénierie](docs/engineering-intelligence.md).
@@ -113,7 +116,8 @@ tests/         futurs tests transverses/E2E
 
 ## Documentation
 
-- **[Guide d'utilisation (Claude, ChatGPT, Codex, Cursor, terminal)](docs/guide-utilisation.md)** — installation par assistant et les 33 commandes
+- **[Parcours complet (création → production)](docs/parcours-complet.md)** — toutes les commandes regroupées par phase, jalons et roadmap
+- **[Guide d'utilisation (Claude, ChatGPT, Codex, Cursor, terminal)](docs/guide-utilisation.md)** — installation par assistant et les 38 commandes
 - [Architecture](docs/architecture/README.md) · [Modèle de données](docs/data-model.md) · [Commandes](docs/commands.md) · [Feuille de route](docs/roadmap.md)
 - [Preuve logicielle](docs/evidence.md) · [Chaîne d'ingénierie vérifiée](docs/verified-engineering.md) · [Intelligence d'ingénierie](docs/engineering-intelligence.md)
 - [Intelligence métier universelle](docs/universal-domain.md) · [Apprentissage automatique](docs/learning.md) · [Évolution autonome Git-native](docs/evolution.md)
