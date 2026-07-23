@@ -98,6 +98,7 @@ tests/         futurs tests transverses/E2E
 
 ## Documentation
 
+- **[Guide d'utilisation (Claude, ChatGPT, Codex, Cursor, terminal)](docs/guide-utilisation.md)** — installation par assistant et les 33 commandes
 - [Architecture](docs/architecture/README.md) · [Modèle de données](docs/data-model.md) · [Commandes](docs/commands.md) · [Feuille de route](docs/roadmap.md)
 - [Preuve logicielle](docs/evidence.md) · [Chaîne d'ingénierie vérifiée](docs/verified-engineering.md) · [Intelligence d'ingénierie](docs/engineering-intelligence.md)
 - [Intelligence métier universelle](docs/universal-domain.md) · [Apprentissage automatique](docs/learning.md) · [Évolution autonome Git-native](docs/evolution.md)
