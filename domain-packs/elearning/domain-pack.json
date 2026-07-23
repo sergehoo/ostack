@@ -1,0 +1,303 @@
+{
+  "$schema": "https://ostack.dev/schemas/domain-pack.schema.json",
+  "schemaVersion": 1,
+  "id": "elearning",
+  "name": "E-learning — formation et apprentissage en ligne",
+  "sector": "education",
+  "language": "fr",
+  "version": "0.1.0",
+  "sources": [
+    {
+      "id": "engineering-best-practices",
+      "title": "Pratiques d'ingénierie logicielle générales",
+      "kind": "document"
+    }
+  ],
+  "experts": [],
+  "glossary": [
+    {
+      "term": "apprenant",
+      "definition": "Personne suivant une formation",
+      "concept": "customer",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "formation",
+      "definition": "Parcours pédagogique structuré en modules",
+      "concept": "product",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "module",
+      "definition": "Unité pédagogique d'une formation",
+      "concept": "resource",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "quiz",
+      "definition": "Évaluation associée à un module",
+      "concept": "control",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "certificat",
+      "definition": "Attestation délivrée à la réussite",
+      "concept": "document",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "formateur",
+      "name": "Formateur",
+      "roles": [
+        "créer",
+        "publier"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "apprenant",
+      "name": "Apprenant",
+      "roles": [
+        "suivre",
+        "évaluer"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "administrateur",
+      "name": "Administrateur",
+      "roles": [
+        "gérer"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "id": "publication-formation",
+      "name": "Publication d'une formation",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "steps": [
+        {
+          "id": "creation",
+          "name": "Création (brouillon)",
+          "actor": "formateur"
+        },
+        {
+          "id": "revue",
+          "name": "Revue",
+          "requires": [
+            "creation"
+          ]
+        },
+        {
+          "id": "publication",
+          "name": "Publication",
+          "requires": [
+            "revue"
+          ]
+        }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "no-auto-publish",
+      "statement": "Une formation générée reste en brouillon jusqu'à validation du formateur",
+      "kind": "internal_rule",
+      "when": {
+        "action": "formation.generate"
+      },
+      "conditions": [
+        {
+          "path": "formation.stayDraft",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Publication automatique interdite"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "quiz-belongs-to-section",
+      "statement": "Chaque quiz référence une section existante de la même formation",
+      "kind": "internal_rule",
+      "when": {
+        "action": "quiz.attach"
+      },
+      "conditions": [
+        {
+          "path": "quiz.sectionValid",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Quiz rattaché à une section inexistante"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "certificate-eligibility",
+      "statement": "Le certificat n'est délivré qu'aux critères de réussite remplis",
+      "kind": "internal_rule",
+      "when": {
+        "action": "certificate.issue"
+      },
+      "conditions": [
+        {
+          "path": "learner.eligible",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Critères de certification non remplis"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    }
+  ],
+  "decisionTables": [
+    {
+      "id": "validation-operation",
+      "name": "Niveau de validation d'une opération",
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "inputs": [
+        {
+          "name": "montant",
+          "values": [
+            "faible",
+            "moyen",
+            "eleve"
+          ]
+        },
+        {
+          "name": "sensibilite",
+          "values": [
+            "standard",
+            "sensible"
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "conditions": {
+            "montant": "faible",
+            "sensibilite": "*"
+          },
+          "outcome": "automatique"
+        },
+        {
+          "conditions": {
+            "montant": "moyen",
+            "sensibilite": "*"
+          },
+          "outcome": "responsable"
+        },
+        {
+          "conditions": {
+            "montant": "eleve",
+            "sensibilite": "*"
+          },
+          "outcome": "direction"
+        }
+      ]
+    }
+  ],
+  "kpis": [
+    {
+      "name": "taux-de-completion",
+      "objective": "Part des apprenants terminant la formation",
+      "formula": "completions / inscriptions * 100",
+      "dataSources": [
+        "enrollments"
+      ],
+      "frequency": "monthly",
+      "owner": "responsable-pedagogique",
+      "threshold": {
+        "target": 70
+      }
+    }
+  ],
+  "mappings": [
+    {
+      "universalConcept": "customer",
+      "localTerms": [
+        "apprenant",
+        "étudiant",
+        "stagiaire"
+      ]
+    },
+    {
+      "universalConcept": "product",
+      "localTerms": [
+        "formation",
+        "cours"
+      ]
+    },
+    {
+      "universalConcept": "control",
+      "localTerms": [
+        "quiz",
+        "évaluation"
+      ]
+    },
+    {
+      "universalConcept": "document",
+      "localTerms": [
+        "certificat",
+        "attestation"
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Quelles obligations réglementaires (accessibilité, protection des données des mineurs, certification qualité de la formation) selon la juridiction ? — À SOURCER.",
+    "Quels critères exacts d'éligibilité au certificat la maison impose-t-elle ?"
+  ]
+}

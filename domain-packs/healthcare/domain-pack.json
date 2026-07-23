@@ -1,0 +1,314 @@
+{
+  "$schema": "https://ostack.dev/schemas/domain-pack.schema.json",
+  "schemaVersion": 1,
+  "id": "healthcare",
+  "name": "Santé — parcours patient et établissement de soins",
+  "sector": "sante",
+  "language": "fr",
+  "version": "0.1.0",
+  "sources": [
+    {
+      "id": "engineering-best-practices",
+      "title": "Pratiques d'ingénierie logicielle générales",
+      "kind": "document"
+    }
+  ],
+  "experts": [],
+  "glossary": [
+    {
+      "term": "patient",
+      "definition": "Personne prise en charge par l'établissement",
+      "concept": "customer",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "dossier patient",
+      "definition": "Dossier médical rassemblant antécédents, diagnostics et actes",
+      "concept": "case_file",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "admission",
+      "definition": "Entrée d'un patient dans une unité de soins",
+      "concept": "transaction",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "diagnostic",
+      "definition": "Conclusion médicale documentée",
+      "concept": "document",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "sortie",
+      "definition": "Fin de prise en charge et sortie du patient",
+      "concept": "event",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "medecin",
+      "name": "Médecin",
+      "roles": [
+        "diagnostiquer",
+        "prescrire"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "infirmier",
+      "name": "Infirmier",
+      "roles": [
+        "soins",
+        "surveillance"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "admission-agent",
+      "name": "Agent d'admission",
+      "roles": [
+        "enregistrement"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "conformite",
+      "name": "Conformité / DPO",
+      "roles": [
+        "protection des données"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "id": "parcours-patient",
+      "name": "Parcours patient",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "steps": [
+        {
+          "id": "admission",
+          "name": "Admission",
+          "actor": "admission-agent"
+        },
+        {
+          "id": "prise-en-charge",
+          "name": "Prise en charge",
+          "actor": "medecin",
+          "requires": [
+            "admission"
+          ]
+        },
+        {
+          "id": "sortie",
+          "name": "Sortie",
+          "requires": [
+            "prise-en-charge"
+          ],
+          "irreversible": true
+        }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "no-discharge-without-diagnosis",
+      "statement": "Aucune sortie sans diagnostic renseigné",
+      "kind": "internal_rule",
+      "when": {
+        "action": "patient.discharge"
+      },
+      "conditions": [
+        {
+          "path": "diagnosis.exists",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Un diagnostic doit être renseigné avant la sortie"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "audit-clinical-actions",
+      "statement": "Tout acte clinique et accès au dossier est journalisé",
+      "kind": "internal_rule",
+      "when": {
+        "action": "clinical.action"
+      },
+      "conditions": [
+        {
+          "path": "audit.recorded",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Action clinique non journalisée"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "consent-before-sensitive-data",
+      "statement": "Le consentement est recueilli avant traitement de données de santé",
+      "kind": "internal_rule",
+      "when": {
+        "action": "patient.data.process"
+      },
+      "conditions": [
+        {
+          "path": "consent.recorded",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Consentement non recueilli"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    }
+  ],
+  "decisionTables": [
+    {
+      "id": "validation-operation",
+      "name": "Niveau de validation d'une opération",
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "inputs": [
+        {
+          "name": "montant",
+          "values": [
+            "faible",
+            "moyen",
+            "eleve"
+          ]
+        },
+        {
+          "name": "sensibilite",
+          "values": [
+            "standard",
+            "sensible"
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "conditions": {
+            "montant": "faible",
+            "sensibilite": "*"
+          },
+          "outcome": "automatique"
+        },
+        {
+          "conditions": {
+            "montant": "moyen",
+            "sensibilite": "*"
+          },
+          "outcome": "responsable"
+        },
+        {
+          "conditions": {
+            "montant": "eleve",
+            "sensibilite": "*"
+          },
+          "outcome": "direction"
+        }
+      ]
+    }
+  ],
+  "kpis": [
+    {
+      "name": "delai-de-prise-en-charge",
+      "objective": "Respect des délais de prise en charge",
+      "formula": "patients_dans_delai / patients_total * 100",
+      "dataSources": [
+        "admissions"
+      ],
+      "frequency": "monthly",
+      "owner": "cadre-de-sante",
+      "threshold": {
+        "target": 95
+      }
+    }
+  ],
+  "mappings": [
+    {
+      "universalConcept": "customer",
+      "localTerms": [
+        "patient",
+        "assuré social"
+      ]
+    },
+    {
+      "universalConcept": "case_file",
+      "localTerms": [
+        "dossier patient"
+      ]
+    },
+    {
+      "universalConcept": "transaction",
+      "localTerms": [
+        "admission",
+        "acte",
+        "consultation"
+      ]
+    },
+    {
+      "universalConcept": "sensitive_data",
+      "localTerms": [
+        "données de santé"
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Quelles obligations réglementaires s'appliquent (par juridiction) : protection des données de santé, hébergement agréé, secret médical, consentement ? — À SOURCER et valider par un expert conformité, avec juridiction et date.",
+    "Quelles décisions cliniques exigent une validation médicale explicite ? (OStack ne prend AUCUNE décision médicale)"
+  ]
+}

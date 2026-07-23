@@ -1,0 +1,302 @@
+{
+  "$schema": "https://ostack.dev/schemas/domain-pack.schema.json",
+  "schemaVersion": 1,
+  "id": "retail",
+  "name": "Commerce de détail — vente et encaissement",
+  "sector": "commerce",
+  "language": "fr",
+  "version": "0.1.0",
+  "sources": [
+    {
+      "id": "engineering-best-practices",
+      "title": "Pratiques d'ingénierie logicielle générales",
+      "kind": "document"
+    }
+  ],
+  "experts": [],
+  "glossary": [
+    {
+      "term": "client",
+      "definition": "Acheteur en magasin ou en ligne",
+      "concept": "customer",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "panier",
+      "definition": "Ensemble d'articles avant paiement",
+      "concept": "resource",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "paiement",
+      "definition": "Règlement d'une commande",
+      "concept": "payment",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "commande",
+      "definition": "Achat validé",
+      "concept": "transaction",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "remboursement",
+      "definition": "Restitution suite à un retour",
+      "concept": "transaction",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "vendeur",
+      "name": "Vendeur / caisse",
+      "roles": [
+        "encaisser"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "client",
+      "name": "Client",
+      "roles": [
+        "acheter",
+        "retourner"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "gestionnaire",
+      "name": "Gestionnaire de magasin",
+      "roles": [
+        "prix",
+        "promotions"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "id": "achat",
+      "name": "Achat et encaissement",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "steps": [
+        {
+          "id": "panier",
+          "name": "Constitution du panier",
+          "actor": "client"
+        },
+        {
+          "id": "paiement",
+          "name": "Paiement",
+          "requires": [
+            "panier"
+          ]
+        },
+        {
+          "id": "livraison-remise",
+          "name": "Remise / livraison",
+          "requires": [
+            "paiement"
+          ]
+        }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "no-delivery-without-payment",
+      "statement": "Aucune remise ni livraison sans paiement validé",
+      "kind": "internal_rule",
+      "when": {
+        "action": "order.delivery"
+      },
+      "conditions": [
+        {
+          "path": "payment.validated",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Paiement non validé"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "refund-requires-return",
+      "statement": "Un remboursement exige un retour enregistré et conforme",
+      "kind": "internal_rule",
+      "when": {
+        "action": "order.refund"
+      },
+      "conditions": [
+        {
+          "path": "return.recorded",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Retour non enregistré"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "audit-price-changes",
+      "statement": "Toute modification de prix ou promotion est journalisée",
+      "kind": "internal_rule",
+      "when": {
+        "action": "price.change"
+      },
+      "conditions": [
+        {
+          "path": "audit.recorded",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Changement de prix non journalisé"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    }
+  ],
+  "decisionTables": [
+    {
+      "id": "validation-operation",
+      "name": "Niveau de validation d'une opération",
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "inputs": [
+        {
+          "name": "montant",
+          "values": [
+            "faible",
+            "moyen",
+            "eleve"
+          ]
+        },
+        {
+          "name": "sensibilite",
+          "values": [
+            "standard",
+            "sensible"
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "conditions": {
+            "montant": "faible",
+            "sensibilite": "*"
+          },
+          "outcome": "automatique"
+        },
+        {
+          "conditions": {
+            "montant": "moyen",
+            "sensibilite": "*"
+          },
+          "outcome": "responsable"
+        },
+        {
+          "conditions": {
+            "montant": "eleve",
+            "sensibilite": "*"
+          },
+          "outcome": "direction"
+        }
+      ]
+    }
+  ],
+  "kpis": [
+    {
+      "name": "taux-de-conversion",
+      "objective": "Part des paniers convertis en commande",
+      "formula": "commandes / paniers * 100",
+      "dataSources": [
+        "orders"
+      ],
+      "frequency": "monthly",
+      "owner": "gestionnaire",
+      "threshold": {
+        "target": 30
+      }
+    }
+  ],
+  "mappings": [
+    {
+      "universalConcept": "customer",
+      "localTerms": [
+        "client",
+        "acheteur"
+      ]
+    },
+    {
+      "universalConcept": "payment",
+      "localTerms": [
+        "paiement",
+        "règlement"
+      ]
+    },
+    {
+      "universalConcept": "transaction",
+      "localTerms": [
+        "commande",
+        "remboursement"
+      ]
+    },
+    {
+      "universalConcept": "resource",
+      "localTerms": [
+        "panier",
+        "stock"
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Quelles obligations réglementaires (droit de rétractation, information précontractuelle, TVA, protection du consommateur) selon la juridiction ? — À SOURCER.",
+    "Quel délai légal de rétractation et de remboursement s'applique ?"
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "$schema": "https://ostack.dev/schemas/domain-pack.schema.json",
+  "schemaVersion": 1,
+  "id": "logistics",
+  "name": "Logistique — entreposage et transport",
+  "sector": "logistique",
+  "language": "fr",
+  "version": "0.1.0",
+  "sources": [
+    {
+      "id": "engineering-best-practices",
+      "title": "Pratiques d'ingénierie logicielle générales",
+      "kind": "document"
+    }
+  ],
+  "experts": [],
+  "glossary": [
+    {
+      "term": "colis",
+      "definition": "Unité expédiée",
+      "concept": "asset",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "commande",
+      "definition": "Demande d'expédition",
+      "concept": "transaction",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "stock",
+      "definition": "Quantité disponible en entrepôt",
+      "concept": "resource",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "expedition",
+      "definition": "Envoi d'une commande vers un destinataire",
+      "concept": "event",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "term": "livraison",
+      "definition": "Remise au destinataire",
+      "concept": "event",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "preparateur",
+      "name": "Préparateur",
+      "roles": [
+        "picking",
+        "emballage"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "transporteur",
+      "name": "Transporteur",
+      "roles": [
+        "acheminer"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    },
+    {
+      "id": "gestionnaire-stock",
+      "name": "Gestionnaire de stock",
+      "roles": [
+        "réappro",
+        "inventaire"
+      ],
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "id": "order-to-delivery",
+      "name": "De la commande à la livraison",
+      "status": "extracted",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "steps": [
+        {
+          "id": "commande",
+          "name": "Commande"
+        },
+        {
+          "id": "preparation",
+          "name": "Préparation",
+          "actor": "preparateur",
+          "requires": [
+            "commande"
+          ]
+        },
+        {
+          "id": "expedition",
+          "name": "Expédition",
+          "requires": [
+            "preparation"
+          ]
+        },
+        {
+          "id": "livraison",
+          "name": "Livraison",
+          "requires": [
+            "expedition"
+          ],
+          "irreversible": true
+        }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "no-ship-without-stock",
+      "statement": "Aucune expédition sans stock disponible réservé",
+      "kind": "internal_rule",
+      "when": {
+        "action": "order.ship"
+      },
+      "conditions": [
+        {
+          "path": "stock.reserved",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Stock insuffisant ou non réservé"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "scan-at-each-step",
+      "statement": "Chaque transition de colis est scannée et horodatée",
+      "kind": "internal_rule",
+      "when": {
+        "action": "parcel.transition"
+      },
+      "conditions": [
+        {
+          "path": "scan.recorded",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Transition de colis non scannée"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    },
+    {
+      "id": "delivery-proof",
+      "statement": "La livraison exige une preuve (signature ou photo)",
+      "kind": "internal_rule",
+      "when": {
+        "action": "order.deliver"
+      },
+      "conditions": [
+        {
+          "path": "delivery.proof",
+          "equals": true
+        }
+      ],
+      "otherwise": {
+        "block": true,
+        "message": "Preuve de livraison manquante"
+      },
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "validatedBy": []
+    }
+  ],
+  "decisionTables": [
+    {
+      "id": "validation-operation",
+      "name": "Niveau de validation d'une opération",
+      "status": "pending_validation",
+      "sources": [
+        "engineering-best-practices"
+      ],
+      "inputs": [
+        {
+          "name": "montant",
+          "values": [
+            "faible",
+            "moyen",
+            "eleve"
+          ]
+        },
+        {
+          "name": "sensibilite",
+          "values": [
+            "standard",
+            "sensible"
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "conditions": {
+            "montant": "faible",
+            "sensibilite": "*"
+          },
+          "outcome": "automatique"
+        },
+        {
+          "conditions": {
+            "montant": "moyen",
+            "sensibilite": "*"
+          },
+          "outcome": "responsable"
+        },
+        {
+          "conditions": {
+            "montant": "eleve",
+            "sensibilite": "*"
+          },
+          "outcome": "direction"
+        }
+      ]
+    }
+  ],
+  "kpis": [
+    {
+      "name": "taux-de-livraison-a-temps",
+      "objective": "Part des livraisons dans le délai promis",
+      "formula": "livraisons_a_temps / livraisons_total * 100",
+      "dataSources": [
+        "deliveries"
+      ],
+      "frequency": "monthly",
+      "owner": "responsable-logistique",
+      "threshold": {
+        "target": 97
+      }
+    }
+  ],
+  "mappings": [
+    {
+      "universalConcept": "asset",
+      "localTerms": [
+        "colis",
+        "palette",
+        "article"
+      ]
+    },
+    {
+      "universalConcept": "transaction",
+      "localTerms": [
+        "commande",
+        "expédition"
+      ]
+    },
+    {
+      "universalConcept": "resource",
+      "localTerms": [
+        "stock"
+      ]
+    },
+    {
+      "universalConcept": "event",
+      "localTerms": [
+        "livraison",
+        "scan"
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Quelles obligations réglementaires (transport de marchandises dangereuses, douanes, traçabilité) selon la juridiction ? — À SOURCER.",
+    "Quels délais de livraison contractuels s'appliquent par mode de transport ?"
+  ]
+}
