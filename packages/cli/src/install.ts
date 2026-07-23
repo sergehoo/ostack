@@ -65,6 +65,7 @@ export async function runInstall(context: CommandContext): Promise<unknown> {
   // settings.json existant; idempotent; ne remplace jamais des hooks présents.
   let learningHook = false;
   if (assistant === "claude") learningHook = await installLearningHook(context.cwd);
+  if (assistant === "claude") await installUpdateHook(context.cwd);
 
   await new JsonLinesAuditStore(join(configDirectory(context.cwd), "audit.jsonl")).append(auditEntry({
     actorId: process.env.USER ?? "cli-user", action: "framework.install", projectId: (await loadConfig(context.cwd)).project.id, outcome: "succeeded",
@@ -102,6 +103,22 @@ async function installLearningHook(cwd: string): Promise<boolean> {
   if (already) return false;
   stop.push({ hooks: [{ type: "command", command }] });
   settings.hooks.Stop = stop;
+  await mkdir(join(cwd, ".claude"), { recursive: true });
+  await writeFile(path, `${JSON.stringify(settings, null, 2)}\n`, { encoding: "utf8" });
+  return true;
+}
+
+// Hook SessionStart: chaque session tire les mises à jour de ressources (§21).
+async function installUpdateHook(cwd: string): Promise<boolean> {
+  const path = join(cwd, ".claude", "settings.json");
+  let settings: { hooks?: Record<string, unknown[]> } = {};
+  const existing = await readFileOrEmpty(path);
+  if (existing.trim()) { try { settings = JSON.parse(existing); } catch { return false; } }
+  settings.hooks = settings.hooks ?? {};
+  const start = Array.isArray(settings.hooks.SessionStart) ? settings.hooks.SessionStart : [];
+  if (JSON.stringify(start).includes("ostack update --auto")) return false;
+  start.push({ hooks: [{ type: "command", command: "ostack update --auto --quiet" }] });
+  settings.hooks.SessionStart = start;
   await mkdir(join(cwd, ".claude"), { recursive: true });
   await writeFile(path, `${JSON.stringify(settings, null, 2)}\n`, { encoding: "utf8" });
   return true;

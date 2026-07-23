@@ -23,6 +23,8 @@ export async function runUpdate(context: CommandContext): Promise<unknown> {
   const rollbackOnFailure = updates.rollbackOnFailure !== false;
   const restorePath = join(frameworkRoot, ".ostack", "update", "restore-point.json");
 
+  if (context.args.includes("--auto")) return (await import("./update-auto.js")).runAutoUpdate(context);
+
   if (context.args.includes("--rollback")) {
     const saved = await readRestorePoint(restorePath);
     if (!saved) throw new Error("Aucun point de restauration enregistré.");

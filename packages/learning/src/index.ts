@@ -16,7 +16,8 @@ export type LessonKind =
   | "residual_risk"
   | "blocking_challenge"
   | "recurring_invariant"
-  | "reference";
+  | "reference"
+  | "verified_pattern";
 
 export interface Lesson {
   id: string;
@@ -86,6 +87,18 @@ export function deriveLessons(input: ObserveInput): Array<Omit<Lesson, "id" | "o
         kind: "residual_risk", key: normalize(risk.description),
         count: 1,
         statement: `Risque résiduel récurrent [${risk.severity}]: ${clip(risk.description)}`,
+        sources: [`evidence:${pack.taskId}`]
+      });
+    }
+  }
+
+  // Verified successes across evidence packs — learn from what worked (§24).
+  for (const pack of input.evidencePacks ?? []) {
+    if (!pack.verified) continue;
+    for (const criterion of pack.generatedFrom?.acceptanceCriteria ?? []) {
+      derived.push({
+        kind: "verified_pattern", key: normalize(criterion), count: 1,
+        statement: `Critère prouvé: ${clip(criterion)}`,
         sources: [`evidence:${pack.taskId}`]
       });
     }
