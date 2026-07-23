@@ -1,0 +1,142 @@
+{
+  "$schema": "https://ostack.dev/schemas/domain-pack.schema.json",
+  "schemaVersion": 1,
+  "id": "finance-markets",
+  "name": "Finance — marchés, trading, gestion de portefeuille, investissement",
+  "sector": "finance",
+  "language": "fr",
+  "version": "0.1.0",
+  "sources": [
+    { "id": "engineering-best-practices", "title": "Pratiques d'ingénierie logicielle générales (précision monétaire, idempotence, audit)", "kind": "document" }
+  ],
+  "experts": [],
+  "glossary": [
+    { "term": "ordre", "definition": "Instruction d'acheter ou de vendre un instrument financier", "concept": "transaction", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "instrument", "definition": "Actif négociable (action, obligation, ETF, dérivé, crypto, part de fonds)", "concept": "asset", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "portefeuille", "definition": "Ensemble des positions détenues par un investisseur", "concept": "resource", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "position", "definition": "Quantité détenue d'un instrument donné et son prix de revient", "concept": "resource", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "exécution", "definition": "Réalisation totale ou partielle d'un ordre sur un marché", "concept": "event", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "règlement-livraison", "definition": "Transfert des titres contre paiement à l'échéance de règlement", "concept": "transaction", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "KYC", "definition": "Vérification de l'identité et de la situation du client avant ouverture de compte", "concept": "control", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "valorisation", "definition": "Calcul de la valeur d'un portefeuille aux prix de marché courants", "concept": "indicator", "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "term": "backtest", "definition": "Évaluation d'une stratégie sur des données historiques", "concept": "control", "status": "extracted", "sources": ["engineering-best-practices"] }
+  ],
+  "actors": [
+    { "id": "investisseur", "name": "Investisseur", "roles": ["passer des ordres", "consulter le portefeuille"], "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "id": "gerant", "name": "Gérant de portefeuille", "roles": ["allouer", "rééquilibrer"], "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "id": "conformite", "name": "Conformité", "roles": ["KYC", "surveillance des abus de marché"], "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "id": "back-office", "name": "Back-office", "roles": ["règlement-livraison", "réconciliation"], "status": "extracted", "sources": ["engineering-best-practices"] },
+    { "id": "risque", "name": "Gestion des risques", "roles": ["limites", "exposition"], "status": "extracted", "sources": ["engineering-best-practices"] }
+  ],
+  "workflows": [
+    {
+      "id": "cycle-de-vie-ordre",
+      "name": "Cycle de vie d'un ordre",
+      "status": "extracted",
+      "sources": ["engineering-best-practices"],
+      "steps": [
+        { "id": "saisie", "name": "Saisie de l'ordre", "actor": "investisseur" },
+        { "id": "controles-pre-trade", "name": "Contrôles pré-négociation (fonds, limites, KYC)", "actor": "risque", "requires": ["saisie"] },
+        { "id": "routage", "name": "Routage vers le marché", "requires": ["controles-pre-trade"] },
+        { "id": "execution", "name": "Exécution", "requires": ["routage"] },
+        { "id": "reglement", "name": "Règlement-livraison", "requires": ["execution"], "irreversible": true },
+        { "id": "reconciliation", "name": "Réconciliation", "actor": "back-office", "requires": ["reglement"] }
+      ]
+    },
+    {
+      "id": "onboarding-investisseur",
+      "name": "Ouverture de compte investisseur",
+      "status": "extracted",
+      "sources": ["engineering-best-practices"],
+      "steps": [
+        { "id": "demande", "name": "Demande d'ouverture", "actor": "investisseur" },
+        { "id": "kyc", "name": "Contrôle KYC", "actor": "conformite", "requires": ["demande"] },
+        { "id": "profil-risque", "name": "Établissement du profil de risque", "actor": "conformite", "requires": ["kyc"] },
+        { "id": "activation", "name": "Activation du compte", "requires": ["profil-risque"] }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "no-execution-without-funds",
+      "statement": "Aucun ordre d'achat n'est routé sans provision ou couverture suffisante vérifiée",
+      "kind": "internal_rule",
+      "when": { "action": "order.route" },
+      "conditions": [{ "path": "order.fundsVerified", "equals": true }],
+      "otherwise": { "block": true, "message": "Provision/couverture non vérifiée : ordre bloqué" },
+      "status": "pending_validation",
+      "sources": ["engineering-best-practices"],
+      "validatedBy": []
+    },
+    {
+      "id": "no-trading-without-kyc",
+      "statement": "Aucun ordre n'est accepté sur un compte dont le KYC n'est pas conforme",
+      "kind": "internal_rule",
+      "when": { "action": "order.submit" },
+      "conditions": [{ "path": "account.kycConforme", "equals": true }],
+      "otherwise": { "block": true, "message": "KYC non conforme : négociation refusée" },
+      "status": "pending_validation",
+      "sources": ["engineering-best-practices"],
+      "validatedBy": []
+    },
+    {
+      "id": "audit-every-order",
+      "statement": "Toute saisie, modification, annulation et exécution d'ordre crée une entrée d'audit horodatée",
+      "kind": "internal_rule",
+      "when": { "action": "order.any" },
+      "conditions": [{ "path": "audit.recorded", "equals": true }],
+      "otherwise": { "block": true, "message": "Action d'ordre non journalisée" },
+      "status": "pending_validation",
+      "sources": ["engineering-best-practices"],
+      "validatedBy": []
+    },
+    {
+      "id": "settlement-irreversible-needs-confirmation",
+      "statement": "Le règlement-livraison, irréversible, exige une confirmation explicite et une réconciliation",
+      "kind": "internal_rule",
+      "when": { "action": "settlement.execute" },
+      "conditions": [{ "path": "settlement.confirmed", "equals": true }],
+      "otherwise": { "block": true, "message": "Règlement non confirmé" },
+      "status": "pending_validation",
+      "sources": ["engineering-best-practices"],
+      "validatedBy": []
+    }
+  ],
+  "decisionTables": [
+    {
+      "id": "validation-ordre",
+      "name": "Niveau de validation d'un ordre",
+      "status": "pending_validation",
+      "sources": ["engineering-best-practices"],
+      "inputs": [
+        { "name": "montant", "values": ["faible", "moyen", "eleve", "tres-eleve"] },
+        { "name": "profilRisque", "values": ["prudent", "equilibre", "dynamique"] }
+      ],
+      "rows": [
+        { "conditions": { "montant": "faible", "profilRisque": "*" }, "outcome": "automatique" },
+        { "conditions": { "montant": "moyen", "profilRisque": "*" }, "outcome": "controle-risque" },
+        { "conditions": { "montant": "eleve", "profilRisque": "*" }, "outcome": "comite-risque" },
+        { "conditions": { "montant": "tres-eleve", "profilRisque": "*" }, "outcome": "direction" }
+      ]
+    }
+  ],
+  "kpis": [
+    { "name": "taux-de-fill", "objective": "Part des ordres exécutés intégralement", "formula": "ordres_executes_totalement / ordres_total * 100", "dataSources": ["orders", "executions"], "frequency": "daily", "owner": "operations", "threshold": { "target": 98, "warning": 95 } },
+    { "name": "delai-de-reglement", "objective": "Respect du délai de règlement standard", "formula": "reglements_dans_delai / reglements_total * 100", "dataSources": ["settlements"], "frequency": "daily", "owner": "back-office", "threshold": { "target": 99, "warning": 97 } },
+    { "name": "tracking-error", "objective": "Écart de suivi d'un portefeuille vs son indice de référence", "formula": "ecart_type(rendement_portefeuille - rendement_indice)", "dataSources": ["valuations", "benchmarks"], "frequency": "monthly", "owner": "gerant" }
+  ],
+  "mappings": [
+    { "universalConcept": "customer", "localTerms": ["investisseur", "client", "porteur"] },
+    { "universalConcept": "transaction", "localTerms": ["ordre", "exécution", "souscription", "rachat", "règlement-livraison"] },
+    { "universalConcept": "asset", "localTerms": ["instrument", "titre", "action", "obligation", "ETF", "position"] },
+    { "universalConcept": "control", "localTerms": ["KYC", "contrôle pré-négociation", "limite de risque", "backtest"] },
+    { "universalConcept": "indicator", "localTerms": ["valorisation", "tracking error", "taux de fill", "exposition"] }
+  ],
+  "openQuestions": [
+    "Quelles obligations réglementaires s'appliquent (par juridiction) : meilleure exécution, adéquation/suitability, information précontractuelle, abus de marché, LBC-FT ? — à SOURCER et valider par un expert conformité, avec juridiction et date d'entrée en vigueur.",
+    "Quel délai de règlement standard s'applique au(x) marché(s) visé(s) ?",
+    "Quelles limites de risque et quels seuils d'escalade la maison impose-t-elle ?",
+    "Quelles règles d'adéquation entre profil de risque et instruments autorisés ?",
+    "Quelles données de marché font foi pour la valorisation et à quelle fréquence ?"
+  ]
+}
