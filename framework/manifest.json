@@ -13,6 +13,11 @@
           "glob": "*.md"
         },
         {
+          "from": "framework/commands",
+          "to": ".ostack/commands",
+          "glob": "*.md"
+        },
+        {
           "from": "framework/agents",
           "to": ".claude/agents",
           "glob": "*.md"
@@ -56,6 +61,11 @@
         {
           "from": "framework/commands",
           "to": ".cursor/rules/ostack/commands",
+          "glob": "*.md"
+        },
+        {
+          "from": "framework/commands",
+          "to": ".ostack/commands",
           "glob": "*.md"
         },
         {

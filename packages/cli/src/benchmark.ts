@@ -58,7 +58,8 @@ export async function runBenchmarkCommand(context: CommandContext): Promise<unkn
       overall: report.overall,
       tasks: report.tasks.map((task) => ({
         taskId: task.taskId, category: task.category,
-        successRate: task.successRate, stable: task.stable, medianDurationMs: task.medianDurationMs,
+        successRate: task.successRate, stable: task.stable,
+        medianDurationMs: task.medianDurationMs, p95DurationMs: task.p95DurationMs,
         ...(task.successRate < 1 ? {
           failures: task.repetitions.filter((entry) => !entry.succeeded).map((entry) => ({
             repetition: entry.repetition,

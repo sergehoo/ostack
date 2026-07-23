@@ -36,7 +36,10 @@ export class OpenAIProvider implements ModelProvider {
       ...(request.maxTokens ? { max_output_tokens: request.maxTokens } : {}),
       ...(request.temperature !== undefined ? { temperature: request.temperature } : {})
     };
-    const data = await postJson<OpenAIResponse>(this.fetcher, this.id, `${this.baseUrl}/responses`, { authorization: `Bearer ${this.apiKey}` }, body, this.timeoutMs);
+    const data = await postJson<OpenAIResponse>(
+      this.fetcher, this.id, `${this.baseUrl}/responses`,
+      { authorization: `Bearer ${this.apiKey}` }, body, this.timeoutMs, request.signal
+    );
     const content = data.output_text ?? data.output?.flatMap((item) => item.content ?? []).filter((item) => item.type === "output_text").map((item) => item.text ?? "").join("") ?? "";
     return {
       content, model: data.model ?? body.model, provider: this.id,

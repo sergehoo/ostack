@@ -5,6 +5,9 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | Commande | Finalité | Niveau maximal par défaut |
 |---|---|---:|
 | `ostack init [nom]` | Initialise `.ostack/config.json` | 2 |
+| `ostack list` | Découvre les commandes du projet, des domaines et des Domain Packs, avec leurs alias | 1 |
+| `ostack inspect <commande>` | Affiche le contrat, les instructions et les ressources associées d’une commande | 1 |
+| `ostack run <commande> [--input …] [--dry-run]` | Construit le contexte et exécute la commande via le fournisseur configuré | 3 |
 | `ostack discover` | Indexe et comprend projet et métier | 1 |
 | `ostack feature <besoin> [--provider …] [--intent <compiled.json>]` | Orchestre intention, spécification, conception, délibération, tests, docs et squelette de preuve | 3 |
 | `ostack bug <symptôme>` | Reproduit, diagnostique, corrige et prévient la régression | 2 |
@@ -49,6 +52,11 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack mesh settle <runId> [--verified\|--failed]` | Convertit le ledger de coûts réels en statistiques après verdict | 2 |
 
 Une commande ne change jamais de niveau parce qu’un agent le demande. Une action de production issue de `release` reste de niveau 4 et exige une approbation humaine explicite.
+
+Les commandes déclaratives de `.ostack/commands` et des packs sont détaillées dans
+[le guide du runtime indépendant](command-runtime.md). `ostack run --dry-run` valide et affiche le
+contexte sans appeler de fournisseur. `--input @fichier` est limité aux fichiers contenus dans le
+projet.
 
 `ostack discover` ne modifie rien par défaut. Ajoutez `--save` pour enregistrer le rapport dans `.ostack/discovery.json`; cette écriture locale est auditée.
 

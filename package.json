@@ -25,6 +25,11 @@
   "engines": {
     "node": ">=22"
   },
+  "overrides": {
+    "@modelcontextprotocol/sdk": {
+      "@hono/node-server": "2.0.11"
+    }
+  },
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/node": "^24.0.0",

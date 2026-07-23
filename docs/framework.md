@@ -4,7 +4,7 @@ OStack est un **framework léger posé dans un projet** — commandes, agents, s
 standards, workflows et politiques — consommé par Claude Code, Codex, Cursor ou un terminal. Ce
 n'est pas une application qu'on lance de l'extérieur.
 
-## Deux couches, un contrat
+## Trois couches, un contrat
 
 1. **Définitions installées dans le projet** (légères, en markdown/JSON) — l'interface que
    l'assistant lit : slash commands `/ostack:*`, définitions d'agents, skill `ostack-method`,
@@ -12,6 +12,9 @@ n'est pas une application qu'on lance de l'extérieur.
 2. **Moteurs déterministes derrière la commande `ostack`** — la partie *vérifiable* : Evidence
    Pack, graphe de traçabilité, moteur de règles métier, performance, architecture. C'est ce qui
    fait qu'OStack repose sur des preuves, pas sur des prompts.
+3. **Runtime indépendant des assistants** — `ostack list`, `ostack inspect` et `ostack run`
+   découvrent la copie canonique `.ostack/commands`, chargent ses ressources et l’exécutent via le
+   port fournisseur commun.
 
 Chaque définition de commande installée dit à l'assistant quel verbe `ostack` appeler et comment
 interpréter la preuve produite. Léger dans le projet, vérifiable derrière.
@@ -29,6 +32,7 @@ Ce qui est déposé (cible `claude`) :
 .claude/commands/ostack/*.md   13 commandes (intent-compile, prove, verify, challenge, graph,
                                observe, feature, domain-create, domain-check, root-cause,
                                decision, architecture-check, performance)
+.ostack/commands/*.md          copie canonique utilisée par le runtime indépendant
 .claude/agents/*.md            9 agents du MVP (supervisor, requirements-engineer,
                                solution-architect, software-engineer, test-engineer,
                                security-engineer, adversarial-reviewer, evidence-verifier,
@@ -41,7 +45,8 @@ CLAUDE.md                      préambule OStack (ajouté une seule fois, idempo
 ```
 
 `cursor` installe sous `.cursor/rules/` et complète `.cursorrules` ; `codex` installe sous
-`.ostack/` et complète `AGENTS.md`. La réinstallation est idempotente (fichiers existants
+`.ostack/` et complète `AGENTS.md`. Toutes les cibles déposent aussi les commandes canoniques sous
+`.ostack/commands`. La réinstallation est idempotente (fichiers existants
 préservés sauf `--force` ; préambule jamais dupliqué). Un `AGENTS.md`/`CLAUDE.md` existant est
 conservé, le préambule est simplement ajouté.
 

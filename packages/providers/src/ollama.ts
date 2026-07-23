@@ -25,7 +25,9 @@ export class OllamaProvider implements ModelProvider {
       messages: [{ role: "system", content: request.system }, ...request.messages],
       options: { ...(request.temperature !== undefined ? { temperature: request.temperature } : {}), ...(request.maxTokens ? { num_predict: request.maxTokens } : {}) }
     };
-    const data = await postJson<OllamaResponse>(this.fetcher, this.id, `${this.baseUrl}/api/chat`, {}, body, this.timeoutMs);
+    const data = await postJson<OllamaResponse>(
+      this.fetcher, this.id, `${this.baseUrl}/api/chat`, {}, body, this.timeoutMs, request.signal
+    );
     return {
       content: data.message.content, model: data.model ?? body.model, provider: this.id,
       ...((data.prompt_eval_count !== undefined || data.eval_count !== undefined) ? { usage: { inputTokens: data.prompt_eval_count ?? 0, outputTokens: data.eval_count ?? 0 } } : {})

@@ -44,6 +44,7 @@ test("stable success and stable failure are both stable; flapping is not", async
   assert.equal(byId.flapping?.stable, false, "an intermittent result is the worst outcome");
   assert.equal(report.overall.fullySuccessful, 1);
   assert.equal(report.overall.stabilityRate, 0.67);
+  assert.equal(byId["always-ok"]?.p95DurationMs, 5);
 });
 
 test("an executor exception is a failed repetition, not a crash of the harness", async () => {

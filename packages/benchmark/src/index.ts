@@ -60,6 +60,7 @@ export interface TaskReport {
   successRate: number;
   stable: boolean;
   medianDurationMs: number;
+  p95DurationMs: number;
 }
 
 export interface BenchmarkReport {
@@ -106,7 +107,8 @@ export async function runBenchmark(suite: BenchmarkSuite, executor: TaskExecutor
       successRate: successes / repetitions.length,
       // Stable = every repetition agrees (all succeeded or all failed the same way).
       stable: successes === 0 || successes === repetitions.length,
-      medianDurationMs: median(repetitions.map((entry) => entry.durationMs))
+      medianDurationMs: median(repetitions.map((entry) => entry.durationMs)),
+      p95DurationMs: percentile(repetitions.map((entry) => entry.durationMs), 0.95)
     });
   }
   const fullySuccessful = tasks.filter((task) => task.successRate === 1).length;
@@ -158,6 +160,13 @@ function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0 ? Math.round((sorted[middle - 1]! + sorted[middle]!) / 2) : sorted[middle]!;
+}
+
+function percentile(values: number[], quantile: number): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.max(0, Math.ceil(quantile * sorted.length) - 1);
+  return sorted[index]!;
 }
 
 function round2(value: number): number {

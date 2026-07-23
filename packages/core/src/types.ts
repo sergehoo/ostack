@@ -94,6 +94,7 @@ export interface RunRepository {
 export interface ModelRequest {
   system: string;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
+  signal?: AbortSignal;
   model?: string;
   temperature?: number;
   maxTokens?: number;

@@ -33,3 +33,21 @@ test("Ollama adapter checks local availability and chat response", async () => {
   assert.equal(await provider.isAvailable(), true);
   assert.equal((await provider.complete(request)).content, "local");
 });
+
+test("HTTP adapters propagate caller cancellation to fetch", async () => {
+  let capturedSignal: AbortSignal | null | undefined;
+  const fetcher = (async (_input: string | URL | Request, init?: RequestInit) => {
+    capturedSignal = init?.signal;
+    return new Promise<Response>((_resolve, reject) => {
+      capturedSignal?.addEventListener("abort", () => reject(capturedSignal?.reason), { once: true });
+    });
+  }) as typeof fetch;
+  const controller = new AbortController();
+  const completion = new OpenAIProvider({ apiKey: "test-key", fetcher }).complete({
+    ...request,
+    signal: controller.signal
+  });
+  controller.abort(new Error("cancelled by caller"));
+  await assert.rejects(completion, /cancelled by caller/);
+  assert.equal(capturedSignal?.aborted, true);
+});

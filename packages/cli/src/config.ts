@@ -9,6 +9,10 @@ export interface OStackConfig {
     models?: { openai?: string; anthropic?: string; ollama?: string };
     defaultModel?: string;
   };
+  execution?: {
+    timeoutMs?: number;
+    maxInputChars?: number;
+  };
   security: { defaultLevel: 1 | 2; productionApproval: "always" };
   knowledge: { include: string[]; exclude: string[] };
   quality?: { commands: Array<{ command: string; args: string[] }> };

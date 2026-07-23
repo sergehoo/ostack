@@ -9,6 +9,9 @@
   ],
   "references": [
     {
+      "path": "../command-runtime"
+    },
+    {
       "path": "../core"
     },
     {

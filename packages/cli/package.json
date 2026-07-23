@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@ostack/core": "0.1.0",
+    "@ostack/command-runtime": "0.1.0",
     "@ostack/changes": "0.1.0",
     "@ostack/evidence": "0.1.0",
     "@ostack/intent": "0.1.0",

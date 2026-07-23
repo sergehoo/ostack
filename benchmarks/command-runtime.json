@@ -1,0 +1,90 @@
+{
+  "$schema": "../schemas/benchmark-suite.schema.json",
+  "schemaVersion": 1,
+  "id": "command-runtime-v1",
+  "repetitions": 5,
+  "tasks": [
+    {
+      "id": "install-canonical-commands",
+      "category": "data_migration",
+      "description": "Installer la copie canonique des commandes de manière stable dans un projet vierge",
+      "command": "install",
+      "args": [
+        "--assistant",
+        "codex"
+      ],
+      "checks": [
+        {
+          "path": "status",
+          "equals": "installed"
+        },
+        {
+          "path": "installed.length",
+          "minimum": 30
+        }
+      ]
+    },
+    {
+      "id": "list-installed-commands",
+      "category": "performance_regression",
+      "description": "Découvrir et indexer toutes les commandes canoniques installées",
+      "command": "list",
+      "args": [],
+      "checks": [
+        {
+          "path": "status",
+          "equals": "ok"
+        },
+        {
+          "path": "total",
+          "minimum": 13
+        },
+        {
+          "path": "collisions.length",
+          "equals": 0
+        }
+      ]
+    },
+    {
+      "id": "inspect-installed-command",
+      "category": "performance_regression",
+      "description": "Résoudre et inspecter une commande canonique existante",
+      "command": "inspect",
+      "args": [
+        "architecture-check"
+      ],
+      "checks": [
+        {
+          "path": "status",
+          "equals": "ok"
+        },
+        {
+          "path": "command.name",
+          "equals": "architecture-check"
+        }
+      ]
+    },
+    {
+      "id": "build-dry-run-context",
+      "category": "performance_regression",
+      "description": "Valider l'entrée et construire le contexte d'exécution sans appeler de fournisseur",
+      "command": "run",
+      "args": [
+        "architecture-check",
+        "--input",
+        "Benchmark",
+        "--dry-run"
+      ],
+      "checks": [
+        {
+          "path": "status",
+          "equals": "dry_run"
+        },
+        {
+          "path": "context.command.name",
+          "equals": "architecture-check"
+        }
+      ]
+    }
+  ]
+}

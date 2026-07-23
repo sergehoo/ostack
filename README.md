@@ -27,8 +27,22 @@ ostack doctor
 `ostack install` pose le framework **dans le projet** au format de votre assistant :
 `--assistant claude` (slash commands `/ostack:*` + subagents sous `.claude/`), `cursor`
 (règles sous `.cursor/`) ou `codex` (`AGENTS.md` + `.ostack/`). Claude Code, Codex ou Cursor lisent
-alors ces définitions ; la commande `ostack` fournit les preuves déterministes derrière chaque verbe.
+alors ces définitions ; une copie canonique des commandes sous `.ostack/commands` alimente le runtime
+indépendant, et la commande `ostack` fournit les preuves déterministes derrière chaque verbe.
 `ostack --help` liste les commandes ; `npm run ostack -- <cmd>` reste équivalent en mode développement.
+
+Les mêmes commandes Markdown peuvent aussi être découvertes et exécutées sans interface
+d’assistant :
+
+```bash
+ostack list
+ostack inspect architecture-check
+ostack run architecture-check --dry-run
+ostack run architecture-check --input "Vérifier la nouvelle frontière" --provider ollama
+```
+
+Voir [le runtime de commandes indépendant](docs/command-runtime.md) pour les alias, les Domain Packs,
+les ressources associées, la validation des entrées et la migration.
 
 ## Workflow de fonctionnalité
 
@@ -76,6 +90,7 @@ Le dashboard est disponible sur `http://127.0.0.1:4320` et l’API sur `http://1
 - **Évolution Git-native** : chaque apprentissage vérifié devient une évolution versionnée (ledger, branche, commit, PR), fusionnée automatiquement seulement à faible risque ; l'auto-évolution ne peut pas réduire ses propres garde-fous (`ostack evolve`). Voir [l'évolution autonome](docs/evolution.md).
 - **Apprentissage automatique** : la base de connaissance s'enrichit toute seule des commandes, preuves, délibérations et projets (`ostack learn`), en faits sourcés cross-projets, jamais inventés. Voir [l'apprentissage](docs/learning.md).
 - **Framework installable** : `ostack install` dépose commandes `/ostack:*`, agents, skill de méthode, standards et workflows directement dans le projet, au format Claude Code / Cursor / Codex. Léger dans le projet, vérifiable via la commande `ostack`. Voir [le framework](docs/framework.md).
+- **Runtime de commandes indépendant** : `ostack list`, `ostack inspect` et `ostack run` découvrent et exécutent les commandes installées et celles des Domain Packs via le fournisseur configuré, avec dry-run, validation, timeout et journal non sensible.
 - **Proof-Carrying Software** : noyau de vérification déterministe (Evidence Pack, Confidence Score, Quality Budget, Definition of Done) et commandes `prove`, `verify --gate`, `confidence`. Voir [la preuve logicielle](docs/evidence.md).
 - **Chaîne d'ingénierie vérifiée** : Intent-to-Proof Compiler (`intent-compile`), Knowledge Graph de traçabilité (`graph`), jumeau numérique avec détection de dérive (`drift`), délibération multi-agents à arbitrage par preuves (`challenge`), Model Mesh routé au coût par résultat vérifié, observation runtime (`observe`), Functional Testing Studio (matrice de permissions) et Authorized Security Lab défensif (`security-lab`). Voir [la chaîne vérifiée](docs/verified-engineering.md).
 - **Intelligence d'ingénierie** : boucle de vérification autonome à budgets durs, Performance Intelligence (baseline/régression), Architecture Intelligence (frontières vérifiées, appliquées à OStack lui-même), analyse de cause racine et mémoire des décisions. Voir [l'intelligence d'ingénierie](docs/engineering-intelligence.md).

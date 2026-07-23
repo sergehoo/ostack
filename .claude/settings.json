@@ -9,6 +9,16 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ostack update --auto --quiet"
+          }
+        ]
+      }
     ]
   }
 }

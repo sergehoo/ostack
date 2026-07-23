@@ -23,7 +23,10 @@ export class AnthropicProvider implements ModelProvider {
   async complete(request: ModelRequest): Promise<ModelResponse> {
     if (!this.apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
     const body = { model: request.model ?? this.defaultModel, system: request.system, messages: request.messages, max_tokens: request.maxTokens ?? 4096, ...(request.temperature !== undefined ? { temperature: request.temperature } : {}) };
-    const data = await postJson<AnthropicResponse>(this.fetcher, this.id, `${this.baseUrl}/messages`, { "x-api-key": this.apiKey, "anthropic-version": "2023-06-01" }, body, this.timeoutMs);
+    const data = await postJson<AnthropicResponse>(
+      this.fetcher, this.id, `${this.baseUrl}/messages`,
+      { "x-api-key": this.apiKey, "anthropic-version": "2023-06-01" }, body, this.timeoutMs, request.signal
+    );
     return {
       content: data.content.filter((item) => item.type === "text").map((item) => item.text ?? "").join(""), model: data.model ?? body.model, provider: this.id,
       ...(data.usage ? { usage: { inputTokens: data.usage.input_tokens, outputTokens: data.usage.output_tokens } } : {})

@@ -7,3 +7,7 @@
 - Toute fonctionnalité comprend tests, documentation, sécurité, déploiement et rollback proportionnés au risque.
 - Déclarer clairement hypothèses, preuves, risques résiduels et éléments non vérifiés.
 - Ne jamais écrire directement dans le projet depuis une sortie de modèle : produire un plan conforme à `schemas/change-plan.schema.json`, afficher son diff, puis exiger la confirmation liée à son empreinte.
+
+## OStack — Verified Engineering
+
+Ce projet est équipé du framework OStack. Applique la méthode `ostack` (skill installé): toute affirmation de réussite doit être adossée à une preuve exécutée via la commande `ostack`. Commandes disponibles sous `ostack <verbe>` (voir les définitions installées). Aucune action critique sans preuve ni approbation humaine.

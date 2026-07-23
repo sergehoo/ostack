@@ -22,6 +22,8 @@ test("install deposits commands, agents, skill, standards and workflows for Clau
 
   const commands = await readdir(join(root, ".claude/commands/ostack"));
   assert.ok(commands.includes("prove.md") && commands.includes("intent-compile.md"));
+  const canonicalCommands = await readdir(join(root, ".ostack/commands"));
+  assert.ok(canonicalCommands.includes("prove.md") && canonicalCommands.includes("intent-compile.md"));
   const agents = await readdir(join(root, ".claude/agents"));
   assert.ok(agents.includes("adversarial-reviewer.md") && agents.includes("release-arbiter.md"));
   assert.ok((await readdir(join(root, ".claude/skills/ostack"))).includes("ostack-method.md"));
@@ -52,6 +54,14 @@ test("the codex target uses AGENTS.md and .ostack/, not .claude/", async () => {
   assert.equal(result.agentsFile, "AGENTS.md");
   assert.ok((await readdir(join(root, ".ostack/commands"))).includes("prove.md"));
   await assert.rejects(readdir(join(root, ".claude")), /ENOENT/);
+});
+
+test("the cursor target keeps its rules and installs canonical runtime commands", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ostack-install-cursor-"));
+  await initializeConfig(root, "Test");
+  await runInstall({ cwd: root, args: ["--assistant", "cursor"], json: true });
+  assert.ok((await readdir(join(root, ".cursor/rules/ostack/commands"))).includes("prove.md"));
+  assert.ok((await readdir(join(root, ".ostack/commands"))).includes("prove.md"));
 });
 
 test("an unknown assistant is rejected; an existing AGENTS.md is preserved", async () => {
