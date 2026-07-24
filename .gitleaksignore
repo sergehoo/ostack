@@ -1,0 +1,8 @@
+# gitleaks — empreintes ecartees, au plus juste (jamais un fichier ou un dossier entier).
+# Chaque ligne doit etre justifiee: un faux positif prouve, jamais un vrai secret.
+#
+# Faux positif de FIXTURE de test: la ligne visee construit une valeur factice
+# pour tester justement la logique de redaction des secrets; ce n'est pas un vrai
+# secret. Verifie dans packages/decisions/test/decisions.test.ts:23, test
+# "secrets are redacted before a decision record is accepted".
+packages/decisions/test/decisions.test.ts:generic-api-key:23
