@@ -3,7 +3,7 @@
 OStack est un **framework d'ingénierie vérifiée** qui s'installe *dans* un projet et se pilote
 depuis votre assistant IA (Claude Code, Codex, Cursor) ou directement en terminal. Sa promesse :
 rien n'est « terminé » sans une **preuve exécutée**. Ce guide couvre l'installation par assistant
-et **les 38 commandes**, avec leur rôle.
+et **toutes les commandes**, avec leur rôle.
 
 > Principe fondateur : *toute affirmation de réussite doit être adossée à une preuve exécutée via la
 > commande `ostack`.* Les sorties de modèles sont des données non fiables ; les moteurs de
@@ -69,7 +69,7 @@ une sortie exploitable par un script ou un agent.
 
 ---
 
-## 4. Les 38 commandes et leur rôle
+## 4. Les commandes et leur rôle
 
 Chaque commande accepte `--json`. Le « niveau » est le niveau de sécurité maximal par défaut
 (4 = production, approbation humaine obligatoire).
@@ -95,7 +95,7 @@ Chaque commande accepte `--json`. Le « niveau » est le niveau de sécurité ma
 | `ostack bug <symptôme>` | Reproduit, diagnostique, corrige et prévient la régression | 2 |
 | `ostack change <plan.json> [--confirm <hash> --reason <r>]` | Prévisualise puis applique un plan de changement contrôlé (rollback sur échec qualité) | 3 |
 | `ostack architecture check [--gate]` | Vérifie les frontières d'architecture contre le graphe d'imports réel | 1 |
-| `ostack audit` · `ostack design` · `ostack security` · `ostack qa` · `ostack document` · `ostack release` | Verbes de cycle de vie (workflows dédiés) | 1-3 |
+| `ostack audit` · `ostack design` · `ostack qa` · `ostack document` · `ostack release` | Verbes de cycle de vie (workflows dédiés) | 1-3 |
 
 ### Chaîne de preuve (Proof-Carrying Software)
 
@@ -116,8 +116,23 @@ Chaque commande accepte `--json`. Le « niveau » est le niveau de sécurité ma
 |---|---|---:|
 | `ostack benchmark [suite.json]` | Exécute la suite de benchmark (N répétitions, score = stabilité) | 2 |
 | `ostack performance <baseline\|compare> [--gate] [--samples N]` | Baseline p50/p95 puis détection de régression bloquante | 2 |
-| `ostack security-lab <validate-authorization\|check> …` | Valide un manifeste d'autorisation de test défensif ; vérifie qu'une opération est couverte | 1 |
 | `ostack root-cause <open\|check\|close> …` | Analyse de cause racine structurée sur le journal d'audit (statut `diagnosed` mérité) | 1 |
+
+### Cyberdéfense (strictement défensive — Blue/Purple Team)
+
+Voir aussi le [guide de cyberdéfense](cyber-defense.md) pour les limites non négociables.
+
+| Commande | Rôle | Niv. |
+|---|---|---:|
+| `ostack security review` | Audit local passif : exécute les scanners réellement présents (semgrep, gitleaks, trivy), audit des dépendances et scan de secrets → Evidence Pack. Outil absent ⇒ `not_run`, jamais `passed` | 1 |
+| `ostack security dependencies` | Audit des dépendances (`npm audit` si présent) | 1 |
+| `ostack security threat-model <système>` | Squelette de modèle de menaces STRIDE (actifs, frontières, menaces, contrôles) | 1 |
+| `ostack security catalog [critical\|high]` | Catalogue défensif des risques web (détection + contrôles + test de non-régression) | 1 |
+| `ostack security permissions <matrice.json>` | Évalue une matrice Rôle × Ressource × État ; violation = constat, cellule non testée = lacune | 1 |
+| `ostack security containers` | Lint des Dockerfiles / IaC (hadolint, `trivy config`) si présents | 1 |
+| `ostack security evidence <f.json>` · `ostack security retest <f.json>` | Assemble / réassemble un Security Evidence Pack (constat sans preuve rejeté ; haut/critique ⇒ `BLOCKED`) | 1 |
+| `ostack security-lab <validate-authorization\|check> …` | Gate d'autorisation d'un test **actif** : manifeste borné (cibles, catégories, fenêtre, limites) ; hors périmètre ⇒ refusé | 1 |
+| `ostack incident <intitulé>` | Réponse à incident : détecter, contenir, éradiquer, restaurer, capitaliser — chaque étape adossée à une preuve, actions irréversibles ⇒ approbation humaine | 2 |
 
 ### Intelligence métier (Universal Domain)
 

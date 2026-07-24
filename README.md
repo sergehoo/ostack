@@ -1,6 +1,6 @@
 # OStack (Ogah Stack)
 
-OStack est un système d’exploitation open source pour l’ingénierie logicielle assistée par IA : agents spécialisés, workflows, connaissance locale, politiques, audit et fournisseurs IA interchangeables.
+OStack est un système d’exploitation open source pour l’ingénierie logicielle assistée par IA : agents spécialisés, workflows, connaissance locale, politiques, audit, cyberdéfense strictement défensive et fournisseurs IA interchangeables.
 
 > État : **developer preview M1 — vérifiée par elle-même**. `npm run self-prove` exécute typecheck, lint, tests (catégories mesurées), audit de dépendances et benchmark de stabilité, puis assemble l'Evidence Pack de release : `VERIFIED · APPROVE_WITH_OBSERVATIONS`. La persistance d'équipe et l'isolation conteneur appartiennent à M2/M3 — voir [la préparation production](docs/production-readiness.md). Ne pas déployer en multi-utilisateurs.
 
@@ -118,7 +118,8 @@ tests/         futurs tests transverses/E2E
 ## Documentation
 
 - **[Parcours complet (création → production)](docs/parcours-complet.md)** — toutes les commandes regroupées par phase, jalons et roadmap
-- **[Guide d'utilisation (Claude, ChatGPT, Codex, Cursor, terminal)](docs/guide-utilisation.md)** — installation par assistant et les 38 commandes
+- **[Guide d'utilisation (Claude, ChatGPT, Codex, Cursor, terminal)](docs/guide-utilisation.md)** — installation par assistant et toutes les commandes
+- **[Cyberdéfense & tests de sécurité](docs/cyber-defense.md)** — expertise défensive (Blue/Purple Team), commandes `security` et `incident`, limites non négociables
 - [Architecture](docs/architecture/README.md) · [Modèle de données](docs/data-model.md) · [Commandes](docs/commands.md) · [Feuille de route](docs/roadmap.md)
 - [Preuve logicielle](docs/evidence.md) · [Chaîne d'ingénierie vérifiée](docs/verified-engineering.md) · [Intelligence d'ingénierie](docs/engineering-intelligence.md)
 - [Intelligence métier universelle](docs/universal-domain.md) · [Cyberdéfense & tests de sécurité](docs/cyber-defense.md) · [Apprentissage automatique](docs/learning.md) · [Évolution autonome Git-native](docs/evolution.md)
