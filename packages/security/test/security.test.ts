@@ -13,6 +13,7 @@ import {
   classifyUntrusted,
   requiresHumanApproval,
   scaffoldThreatModel,
+  scaffoldIncident,
 } from "../src/index.js";
 
 const finding = (over: Partial<SecurityFinding> = {}): SecurityFinding => ({
@@ -150,4 +151,17 @@ test("threat-model scaffold covers all STRIDE categories", () => {
 
 test("threat-model requires a system name", () => {
   assert.throws(() => scaffoldThreatModel({ system: "" }), /requis/);
+});
+
+test("incident scaffold covers the five phases and forbids counter-attack (§19)", () => {
+  const record = scaffoldIncident({ title: "Fuite de jeton suspectée", detectedVia: ["alerte SIEM"] });
+  const phases = new Set(record.steps.map((step) => step.phase));
+  assert.deepEqual([...phases].sort(), ["capitalize", "contain", "detect", "eradicate", "recover"]);
+  assert.equal(record.status, "open");
+  assert.ok(record.steps.some((step) => step.requiresHumanApproval));
+  assert.ok(record.forbiddenActions.some((action) => /contre-attaque/i.test(action)));
+});
+
+test("incident requires a title", () => {
+  assert.throws(() => scaffoldIncident({ title: "" }), /requis/);
 });

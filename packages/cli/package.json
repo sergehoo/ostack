@@ -20,6 +20,7 @@
     "@ostack/observe": "0.1.0",
     "@ostack/security-lab": "0.1.0",
     "@ostack/security": "0.1.0",
+    "@ostack/functional": "0.1.0",
     "@ostack/discovery": "0.1.0",
     "@ostack/providers": "0.1.0",
     "@ostack/sqlite": "0.1.0",

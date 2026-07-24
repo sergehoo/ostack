@@ -26,8 +26,16 @@ ostack security review                     # audit local passif, non destructif 
 ostack security dependencies               # audit des dépendances (npm audit si présent)
 ostack security threat-model "<système>"   # squelette STRIDE (actifs, frontières, menaces, contrôles)
 ostack security catalog [critical|high]    # catalogue défensif des risques web (détection + contrôles + test)
+ostack security permissions <matrice.json> # matrice Rôle × Ressource × État (violations, cellules non testées)
+ostack security containers                 # lint Dockerfiles/IaC (hadolint, trivy config) si présents
 ostack security evidence <fichier.json>    # assemble un Security Evidence Pack
+ostack security retest <fichier.json>      # réassemble l'Evidence Pack en revérifiant l'état des constats
+ostack incident "<intitulé>"               # squelette de réponse à incident (détecter → capitaliser)
 ```
+
+`review` exécute les scanners réellement présents sur le PATH : **semgrep** (SAST), **gitleaks**
+(secrets, valeur toujours rédigée §24), **trivy** (dépendances/IaC). Un scanner absent, en échec ou
+qui dépasse `OSTACK_SCANNER_TIMEOUT_MS` (45 s par défaut) devient `not_run`, jamais `passed`.
 
 Test **actif** autorisé (exception encadrée) — passe exclusivement par le gate d'autorisation :
 

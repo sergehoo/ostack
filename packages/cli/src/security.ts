@@ -9,16 +9,25 @@ import {
   webRiskCatalog,
   webRisksByLevel,
   scaffoldThreatModel,
+  scaffoldIncident,
+  parseHadolint,
+  parseTrivy,
   SCANNERS,
   type RiskLevel,
   type SecurityCheck,
   type SecurityFinding,
   type SecurityEvidenceInput,
+  type IncidentInput,
 } from "@ostack/security";
+import { evaluateMatrix, type MatrixRule, type MatrixObservation } from "@ostack/functional";
 import { configDirectory, loadConfig } from "./config.js";
 import type { CommandContext } from "./commands.js";
 
 const run = promisify(execFile);
+
+// Per-scanner wall-clock cap so `review` stays responsive. A scanner that
+// exceeds it is reported `not_run` (no verdict), never a fabricated pass.
+const SCANNER_TIMEOUT_MS = Number(process.env.OSTACK_SCANNER_TIMEOUT_MS ?? 45_000);
 
 // `ostack security <sub>` — strictly DEFENSIVE. Every path here is passive and
 // non-destructive: it inspects the local project, never tests a live third
@@ -35,19 +44,40 @@ export async function runSecurity(context: CommandContext): Promise<unknown> {
       return threatModel(rest);
     case "catalog":
       return catalog(rest);
+    case "permissions":
+      return permissions(context, rest);
+    case "containers":
+      return containers(context);
     case "evidence":
       return evidenceFromFile(context, rest);
+    case "retest":
+      return retest(context, rest);
     default:
       throw new Error(
-        "Usage: ostack security <review|dependencies|threat-model|catalog|evidence>\n" +
-          "  review               audit défensif local (outils détectés, dépendances, secrets) → Evidence Pack\n" +
+        "Usage: ostack security <review|dependencies|threat-model|catalog|permissions|containers|evidence|retest>\n" +
+          "  review               audit défensif local (outils détectés, dépendances, secrets, scanners) → Evidence Pack\n" +
           "  dependencies         audit des dépendances (npm audit si présent)\n" +
           "  threat-model <sys>   squelette de modèle de menaces STRIDE\n" +
           "  catalog [niveau]     catalogue défensif des risques web\n" +
+          "  permissions <f.json> évalue une matrice Rôle × Ressource × État (violations, cellules non testées)\n" +
+          "  containers           lint des Dockerfiles / IaC (hadolint, trivy) si présents\n" +
           "  evidence <fic.json>  assemble un Security Evidence Pack depuis un fichier\n" +
+          "  retest <fic.json>    réassemble l'Evidence Pack en revérifiant l'état des constats\n" +
           "Pour un test actif autorisé et borné dans le temps: ostack security-lab.",
       );
   }
+}
+
+// `ostack incident <intitulé>` — squelette de réponse à incident (§19).
+export async function runIncident(context: CommandContext): Promise<unknown> {
+  const first = context.args[0];
+  if (first && (await fileExists(isAbsolute(first) ? first : resolve(context.cwd, first)))) {
+    const input = JSON.parse(await readFile(isAbsolute(first) ? first : resolve(context.cwd, first), "utf8")) as IncidentInput;
+    return scaffoldIncident(input);
+  }
+  const title = context.args.join(" ").trim();
+  if (!title) throw new Error("Usage: ostack incident <intitulé de l'incident> | <fichier.json>");
+  return scaffoldIncident({ title });
 }
 
 async function detectHostTools(): Promise<string[]> {
@@ -120,8 +150,13 @@ async function runScanners(cwd: string, available: readonly string[]): Promise<{
     if (!present.has(scanner.tool)) continue;
     let stdout: string;
     try {
-      ({ stdout } = await run(scanner.tool, scanner.args, { cwd, maxBuffer: 50 * 1024 * 1024 }));
+      ({ stdout } = await run(scanner.tool, scanner.args, { cwd, maxBuffer: 50 * 1024 * 1024, timeout: SCANNER_TIMEOUT_MS }));
     } catch (error) {
+      // A scanner killed by the timeout produced no verdict: honestly not_run (§14).
+      if ((error as { killed?: boolean }).killed) {
+        checks.push({ name: scanner.check, status: "not_run", detail: `${scanner.tool} a dépassé ${SCANNER_TIMEOUT_MS / 1000}s; lancez-le directement pour un scan complet` });
+        continue;
+      }
       // Most scanners exit non-zero when they find issues; the JSON is still on stdout.
       const captured = (error as { stdout?: string }).stdout;
       if (typeof captured === "string" && captured.trim().length > 0) {
@@ -207,6 +242,136 @@ function catalog(rest: string[]): unknown {
   const level = rest[0] as RiskLevel | undefined;
   const risks = level ? webRisksByLevel(level) : webRiskCatalog();
   return risks.map((risk) => ({ id: risk.id, title: risk.title, riskLevel: risk.riskLevel, detection: risk.detection, controls: risk.controls, nonRegressionTest: risk.nonRegressionTest, reference: risk.reference }));
+}
+
+function containedFile(cwd: string, path: string): string {
+  const absolute = isAbsolute(path) ? path : resolve(cwd, path);
+  const relation = relative(cwd, absolute);
+  if (relation === ".." || relation.startsWith(`..${sep}`) || isAbsolute(relation)) throw new Error("Le fichier doit être dans le projet");
+  return absolute;
+}
+
+// Permission matrix (§16): a declared Rôle × Ressource × État × Résultat is
+// checked against observed outcomes. A violation is a high finding; a cell that
+// was never exercised is a coverage gap (medium) — never a silent pass.
+async function permissions(context: CommandContext, rest: string[]): Promise<unknown> {
+  const path = rest[0];
+  if (!path) throw new Error("Usage: ostack security permissions <matrice.json>  (champs: rules[], observations[])");
+  const input = JSON.parse(await readFile(containedFile(context.cwd, path), "utf8")) as { rules?: MatrixRule[]; observations?: MatrixObservation[] };
+  const rules = input.rules ?? [];
+  const observations = input.observations ?? [];
+  if (rules.length === 0) throw new Error("La matrice doit déclarer au moins une règle (rules[]).");
+  const report = evaluateMatrix(rules, observations);
+
+  const findings: SecurityFinding[] = [];
+  for (const violation of report.violations) {
+    findings.push({
+      id: `perm:${violation.feature}:${violation.role}:${violation.state}`,
+      title: `Violation de permission: ${violation.feature} × ${violation.role} × ${violation.state}`,
+      severity: "high",
+      evidence: `Attendu ${violation.expected}, observé ${violation.observed} (matrice évaluée).`,
+      remediation: "Corriger la décision d'autorisation côté serveur pour cette cellule; re-tester.",
+      nonRegressionTest: `${violation.feature} × ${violation.role} × ${violation.state} observe ${violation.expected}.`,
+      status: "open",
+    });
+  }
+  for (const cell of report.untested) {
+    findings.push({
+      id: `perm-untested:${cell.feature}:${cell.role}:${cell.state}`,
+      title: `Permission non testée: ${cell.feature} × ${cell.role} × ${cell.state}`,
+      severity: "medium",
+      evidence: "Cellule déclarée mais jamais exercée: une permission non testée est un contournement potentiel.",
+      remediation: "Ajouter une observation réelle pour cette cellule.",
+      status: "open",
+    });
+  }
+
+  const pack = assembleSecurityEvidence({ scope: { authorized: true, environment: "local", production: false }, findings });
+  return {
+    scope: "permission matrix (§16)",
+    recommendation: pack.recommendation,
+    violations: report.violations.length,
+    untested: report.untested.length,
+    unexpectedObservations: report.unexpectedObservations.length,
+    passed: report.summary.passed,
+    blockers: pack.blockers,
+    contentHash: pack.contentHash,
+  };
+}
+
+// Containers/IaC: run hadolint on Dockerfiles and trivy config, ONLY if present.
+async function containers(context: CommandContext): Promise<unknown> {
+  const available = await detectHostTools();
+  const present = new Set(available);
+  const checks: SecurityCheck[] = [];
+  const findings: SecurityFinding[] = [];
+
+  const dockerfiles = ["Dockerfile", "dockerfile", "docker/Dockerfile"].filter(() => true);
+  if (present.has("hadolint")) {
+    let ran = false;
+    for (const candidate of dockerfiles) {
+      const path = join(context.cwd, candidate);
+      if (!(await fileExists(path))) continue;
+      ran = true;
+      try {
+        const { stdout } = await run("hadolint", ["--format", "json", candidate], { cwd: context.cwd, maxBuffer: 20 * 1024 * 1024 });
+        findings.push(...parseHadolint(JSON.parse(stdout)));
+      } catch (error) {
+        const captured = (error as { stdout?: string }).stdout;
+        if (typeof captured === "string" && captured.trim().startsWith("[")) findings.push(...parseHadolint(JSON.parse(captured)));
+        else checks.push({ name: `containers:hadolint:${candidate}`, status: "not_run", detail: "sortie hadolint non exploitable" });
+      }
+    }
+    if (!ran) checks.push({ name: "containers:hadolint", status: "not_run", detail: "aucun Dockerfile trouvé" });
+  } else {
+    checks.push({ name: "containers:hadolint", status: "not_run", detail: "hadolint absent (§14)" });
+  }
+
+  if (present.has("trivy")) {
+    try {
+      const { stdout } = await run("trivy", ["config", "--quiet", "--format", "json", "."], { cwd: context.cwd, maxBuffer: 50 * 1024 * 1024, timeout: SCANNER_TIMEOUT_MS });
+      findings.push(...parseTrivy(JSON.parse(stdout)));
+    } catch (error) {
+      if ((error as { killed?: boolean }).killed) checks.push({ name: "containers:trivy-config", status: "not_run", detail: `trivy a dépassé ${SCANNER_TIMEOUT_MS / 1000}s` });
+      else {
+        const captured = (error as { stdout?: string }).stdout;
+        if (typeof captured === "string" && captured.trim().startsWith("{")) findings.push(...parseTrivy(JSON.parse(captured)));
+        else checks.push({ name: "containers:trivy-config", status: "not_run", detail: "sortie trivy non exploitable" });
+      }
+    }
+  } else {
+    checks.push({ name: "containers:trivy-config", status: "not_run", detail: "trivy absent (§14)" });
+  }
+
+  const pack = assembleSecurityEvidence({ scope: { authorized: true, environment: "local", production: false }, checks, findings });
+  return {
+    scope: "containers / IaC (hadolint, trivy config)",
+    recommendation: pack.recommendation,
+    blockers: pack.blockers,
+    checkResults: checks.map((check) => ({ name: check.name, status: check.status, detail: check.detail })),
+    findings: findings.map((finding) => ({ id: finding.id, title: finding.title, severity: finding.severity })),
+    contentHash: pack.contentHash,
+    note: "Outil absent ⇒ not_run, jamais passed (§14).",
+  };
+}
+
+// Retest (§21): re-assemble an Evidence Pack from an updated findings file,
+// honouring each finding's current status (fixed findings drop out of the count).
+async function retest(context: CommandContext, rest: string[]): Promise<unknown> {
+  const path = rest[0];
+  if (!path) throw new Error("Usage: ostack security retest <fichier.json>  (mêmes champs qu'evidence, statut mis à jour)");
+  const input = JSON.parse(await readFile(containedFile(context.cwd, path), "utf8")) as SecurityEvidenceInput;
+  const pack = assembleSecurityEvidence(input);
+  const findings = input.findings ?? [];
+  return {
+    scope: "retest (§21)",
+    recommendation: pack.recommendation,
+    open: findings.filter((finding) => finding.status === "open").length,
+    fixed: findings.filter((finding) => finding.status === "fixed").length,
+    accepted: findings.filter((finding) => finding.status === "accepted").length,
+    blockers: pack.blockers,
+    contentHash: pack.contentHash,
+  };
 }
 
 async function evidenceFromFile(context: CommandContext, rest: string[]): Promise<unknown> {

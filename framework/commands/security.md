@@ -1,6 +1,6 @@
 ---
 description: Auditer la sécurité de façon strictement défensive (Blue/Purple Team).
-argument-hint: review | dependencies | threat-model <système> | catalog [niveau] | evidence <fichier.json>
+argument-hint: review | dependencies | threat-model <système> | catalog [niveau] | permissions <f.json> | containers | evidence <f.json> | retest <f.json>
 ---
 
 # /ostack:security
@@ -11,7 +11,7 @@ Arguments reçus : `$ARGUMENTS`
 
 ## Ce que tu fais
 
-Strictement défensif (skill `ostack-security-defense`). `review` est un audit local passif et non destructif ; un outil absent devient `not_run`, jamais `passed`. Un constat sans preuve est rejeté ; un constat haut/critique bloque la release. Un test ACTIF sur une cible réelle exige un manifeste `ostack security-lab` valide et autorisé — sinon, refuse. Ne produis jamais de charge offensive contre une cible réelle ou tierce.
+Strictement défensif (skill `ostack-security-defense`). `review` est un audit local passif et non destructif qui exécute les scanners réels présents (semgrep, gitleaks, trivy) ; un outil absent ou expiré devient `not_run`, jamais `passed`. `permissions` évalue une matrice Rôle×Ressource×État ; `containers` lint les Dockerfiles/IaC. Un constat sans preuve est rejeté ; un constat haut/critique bloque la release. Un test ACTIF sur une cible réelle exige un manifeste `ostack security-lab` valide et autorisé — sinon, refuse. Ne produis jamais de charge offensive contre une cible réelle ou tierce.
 
 ## Invocation de référence
 

@@ -132,6 +132,42 @@ export function parseTrivy(output: unknown): SecurityFinding[] {
   return findings;
 }
 
+// ── Hadolint (Dockerfile lint): `hadolint --format json <Dockerfile>` ──────
+function mapHadolintLevel(level: string): Severity {
+  switch (level.toLowerCase()) {
+    case "error":
+      return "high";
+    case "warning":
+      return "medium";
+    case "info":
+      return "low";
+    case "style":
+      return "low";
+    default:
+      return "info";
+  }
+}
+
+export function parseHadolint(output: unknown): SecurityFinding[] {
+  return asArray(output).map((raw, index) => {
+    const item = raw as { file?: unknown; line?: unknown; code?: unknown; level?: unknown; message?: unknown };
+    const code = str(item.code) || `hadolint-${index}`;
+    const file = str(item.file) || "Dockerfile";
+    const line = num(item.line);
+    const location = `${file}${line ? `:${line}` : ""}`;
+    const message = str(item.message) || "Problème de configuration Dockerfile.";
+    return {
+      id: `hadolint:${code}:${location}`,
+      title: `Hadolint: ${code}`,
+      severity: mapHadolintLevel(str(item.level)),
+      file: line ? `${file}:${line}` : file,
+      evidence: `${code} @ ${location} — ${message}`,
+      remediation: `Corriger le Dockerfile selon ${code} (${message}).`,
+      status: "open",
+    };
+  });
+}
+
 export interface ScannerSpec {
   tool: string;
   args: string[];

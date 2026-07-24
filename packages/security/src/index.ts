@@ -10,3 +10,4 @@ export * from "./tools.js";
 export * from "./self-defense.js";
 export * from "./threat-model.js";
 export * from "./scanners.js";
+export * from "./incident.js";

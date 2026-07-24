@@ -15,7 +15,8 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack audit` | Audit architecture, qualité, sécurité et opérations | 1 |
 | `ostack architecture` | Propose ADR, composants et compromis | 1 |
 | `ostack design` | Produit parcours, interface et contrôle accessibilité | 2 |
-| `ostack security <review\|dependencies\|threat-model\|catalog\|evidence>` | Cyberdéfense (Blue/Purple Team) : audit local passif, modèle de menaces STRIDE, catalogue défensif des risques web, Evidence Pack ; test actif ⇒ `security-lab` | 1 |
+| `ostack security <review\|dependencies\|threat-model\|catalog\|permissions\|containers\|evidence\|retest>` | Cyberdéfense (Blue/Purple Team) : audit local passif (scanners réels semgrep/gitleaks/trivy si présents), matrice de permissions, Dockerfiles/IaC, modèle de menaces STRIDE, catalogue des risques web, Evidence Pack ; test actif ⇒ `security-lab` | 1 |
+| `ostack incident <intitulé>` | Réponse à incident défensive : détecter, contenir, éradiquer, restaurer, capitaliser — chaque étape adossée à une preuve | 2 |
 | `ostack qa` | Exécute stratégie et barrières qualité | 2 |
 | `ostack document` | Génère la documentation traçable | 2 |
 | `ostack release` | Prépare version, migration, déploiement et rollback | 3 |

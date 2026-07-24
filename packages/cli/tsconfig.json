@@ -57,6 +57,9 @@
       "path": "../security"
     },
     {
+      "path": "../functional"
+    },
+    {
       "path": "../mesh"
     },
     {

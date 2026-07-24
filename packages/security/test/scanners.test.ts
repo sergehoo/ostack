@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 
-import { parseSemgrep, parseGitleaks, parseTrivy, SCANNERS, assembleSecurityEvidence } from "../src/index.js";
+import { parseSemgrep, parseGitleaks, parseTrivy, parseHadolint, SCANNERS, assembleSecurityEvidence } from "../src/index.js";
 
 // Fixtures mirror each tool's documented JSON shape.
 
@@ -82,4 +82,16 @@ test("SCANNERS catalog covers sast, secrets and sca and only known tools", () =>
   const tools = SCANNERS.map((s) => s.tool);
   assert.deepEqual(tools, ["semgrep", "gitleaks", "trivy"]);
   assert.deepEqual([...new Set(SCANNERS.map((s) => s.category))].sort(), ["sast", "sca", "secrets"]);
+});
+
+test("parseHadolint maps Dockerfile issues by level", () => {
+  const output = [
+    { file: "Dockerfile", line: 1, code: "DL3006", level: "warning", message: "Always tag the version of an image explicitly" },
+    { file: "Dockerfile", line: 5, code: "DL3002", level: "error", message: "Last USER should not be root" },
+  ];
+  const findings = parseHadolint(output);
+  assert.equal(findings.length, 2);
+  assert.equal(findings[0]?.severity, "medium");
+  assert.equal(findings[1]?.severity, "high");
+  assert.equal(findings[1]?.file, "Dockerfile:5");
 });
