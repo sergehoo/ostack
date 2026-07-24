@@ -9,6 +9,7 @@ import {
   webRiskCatalog,
   webRisksByLevel,
   scaffoldThreatModel,
+  SCANNERS,
   type RiskLevel,
   type SecurityCheck,
   type SecurityFinding,
@@ -108,6 +109,42 @@ async function runSecretScan(cwd: string): Promise<SecurityCheck> {
   }
 }
 
+// Run each real scanner that is actually present on PATH. A tool that is absent
+// is skipped entirely; a tool that fails to run or emit parseable JSON becomes a
+// `not_run` check — never a fabricated pass (§14).
+async function runScanners(cwd: string, available: readonly string[]): Promise<{ checks: SecurityCheck[]; findings: SecurityFinding[] }> {
+  const present = new Set(available);
+  const checks: SecurityCheck[] = [];
+  const findings: SecurityFinding[] = [];
+  for (const scanner of SCANNERS) {
+    if (!present.has(scanner.tool)) continue;
+    let stdout: string;
+    try {
+      ({ stdout } = await run(scanner.tool, scanner.args, { cwd, maxBuffer: 50 * 1024 * 1024 }));
+    } catch (error) {
+      // Most scanners exit non-zero when they find issues; the JSON is still on stdout.
+      const captured = (error as { stdout?: string }).stdout;
+      if (typeof captured === "string" && captured.trim().length > 0) {
+        stdout = captured;
+      } else {
+        checks.push({ name: scanner.check, status: "not_run", detail: `${scanner.tool} n'a produit aucune sortie exploitable` });
+        continue;
+      }
+    }
+    let parsed: SecurityFinding[];
+    try {
+      parsed = scanner.parse(JSON.parse(stdout));
+    } catch {
+      checks.push({ name: scanner.check, status: "not_run", detail: `sortie de ${scanner.tool} non analysable` });
+      continue;
+    }
+    const blocking = parsed.some((finding) => finding.severity === "critical" || finding.severity === "high");
+    checks.push({ name: scanner.check, status: blocking ? "failed" : parsed.length > 0 ? "warning" : "passed", detail: `${parsed.length} constat(s)` });
+    findings.push(...parsed);
+  }
+  return { checks, findings };
+}
+
 async function review(context: CommandContext): Promise<unknown> {
   const config = await loadConfig(context.cwd);
   const available = await detectHostTools();
@@ -115,14 +152,16 @@ async function review(context: CommandContext): Promise<unknown> {
 
   const audit = await runNpmAudit(context.cwd);
   const secretScan = await runSecretScan(context.cwd);
+  const scanners = await runScanners(context.cwd, available);
 
   const checks: SecurityCheck[] = [
     { name: "dependency-audit", status: audit.status, detail: audit.detail },
     secretScan,
+    ...scanners.checks,
     { name: "tooling-coverage", status: coverage.uncoveredCategories.length > 0 ? "warning" : "passed", detail: `présents: ${coverage.present.join(", ") || "aucun"}; catégories sans outil: ${coverage.uncoveredCategories.join(", ") || "aucune"}` },
   ];
 
-  const findings: SecurityFinding[] = [];
+  const findings: SecurityFinding[] = [...scanners.findings];
   if (audit.critical + audit.high > 0) {
     findings.push({
       id: "dep-vulns",

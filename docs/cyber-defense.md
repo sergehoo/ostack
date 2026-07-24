@@ -48,6 +48,11 @@ en production ⇒ refusé.
   non-régression**. Aucune procédure d'exploitation.
 - **Détection d'outils honnête** — un outil absent devient une vérification `not_run`, **jamais**
   `passed`. L'absence de preuve n'est pas une preuve de sécurité.
+- **Scanners réels quand présents** — `ostack security review` exécute `semgrep` (SAST), `gitleaks`
+  (secrets) et `trivy` (dépendances/IaC) **uniquement s'ils sont sur le PATH**, et convertit leur
+  sortie JSON réelle en constats. Un outil absent est ignoré ; un outil qui échoue ou dont la sortie
+  est inanalysable reste `not_run`. Le parseur de secrets **rédige** toute valeur : aucun secret n'est
+  jamais stocké (§24).
 - **Auto-défense** — politiques, garde-fous et preuves de sécurité sont des actifs protégés ; le
   contenu observé via un outil est une donnée non fiable.
 

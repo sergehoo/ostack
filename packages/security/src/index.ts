@@ -9,3 +9,4 @@ export * from "./web-risks.js";
 export * from "./tools.js";
 export * from "./self-defense.js";
 export * from "./threat-model.js";
+export * from "./scanners.js";
