@@ -12,6 +12,8 @@ ostack inspect architecture-check
 ostack run architecture-check --dry-run
 ostack run project-review --input "Ajouter une API d'audit"
 ostack run project-review --input @request.md --provider ollama --json
+ostack run-all --input "Améliorer ce projet"
+ostack run-all --input @request.md --execute --provider ollama
 ```
 
 `--dry-run` n’appelle aucun fournisseur. Il valide la commande et son entrée, charge les ressources
@@ -19,6 +21,45 @@ associées et retourne le contexte exact qui serait envoyé.
 
 `--input @fichier` lit un fichier UTF-8 situé dans le projet. Les chemins extérieurs au projet, les
 liens symboliques sortants et les fichiers de plus de 1 Mo sont refusés.
+
+## Exécuter tous les skills dans un cycle unique
+
+`ostack run-all` découvre les skills installés dans `.ostack/skills`, les assemble avec l’objectif
+fourni et construit un seul contexte structuré. Sans `--execute`, la commande reste en prévisualisation
+et n’appelle aucun fournisseur :
+
+```bash
+ostack run-all --input "Rendre l’API plus robuste" --json
+```
+
+Après examen du contexte, l’exécution réelle effectue **un seul appel fournisseur**. Le modèle doit
+indiquer, pour chaque skill, s’il a été appliqué, jugé non pertinent ou bloqué, avec sa raison :
+
+```bash
+ostack run-all --input @examples/run-all-objective.md --execute --provider ollama
+```
+
+Les packs métier ne sont jamais injectés silencieusement. Sélectionnez un pack précis, répétable,
+ou tous les packs disponibles :
+
+```bash
+ostack run-all --input "Vérifier le moteur d’ordres" --domain finance
+ostack run-all --input "Audit multidomaine" --include-domains
+```
+
+Options :
+
+- `--execute` : autorise l’appel au fournisseur ; absent = dry-run sûr ;
+- `--domain <id>` : ajoute les skills d’un domaine précis ; l’option est répétable ;
+- `--include-domains` : ajoute tous les packs découverts ;
+- `--provider <id>` : sélectionne le fournisseur et exige `--execute` ;
+- `--timeout <ms>` : borne l’appel entre 100 et 600 000 ms ;
+- `--input <texte|@fichier>` : objectif obligatoire.
+
+Les doublons strictement identiques sont dédupliqués. Deux définitions différentes portant le même
+nom bloquent le cycle afin qu’aucune règle ne soit choisie arbitrairement. Les instructions combinées
+sont bornées, les liens symboliques sont ignorés et le texte produit par le modèle n’est jamais
+exécuté comme commande système.
 
 ## Emplacements découverts
 
@@ -122,12 +163,13 @@ Aucune migration destructive n’est requise :
 3. ajouter progressivement `aliases`, les associations et le contrat d’entrée ;
 4. utiliser `ostack list --json` pour détecter les alias ambigus ;
 5. utiliser `ostack inspect <commande>` puis `ostack run <commande> --dry-run` avant le premier appel ;
-6. exécuter avec le fournisseur configuré.
+6. prévisualiser `ostack run-all --input "<objectif>"` avant d’ajouter `--execute` ;
+7. exécuter avec le fournisseur configuré.
 
-`ostack install` conserve son comportement et sa règle de non-écrasement. Les commandes installées
+`ostack install` conserve son comportement et sa règle de non-écrasement. Les commandes et skills installés
 restent lisibles directement par les assistants et deviennent également exécutables par la CLI.
 Pour Claude Code et Cursor, l’installation conserve l’emplacement propre à l’assistant et ajoute la
-copie canonique dans `.ostack/commands`. Une commande personnalisée déjà présente n’est pas écrasée
+copie canonique dans `.ostack/commands` et `.ostack/skills`. Une définition personnalisée déjà présente n’est pas écrasée
 sans `--force`.
 
 ### Rollback de l’installation canonique
@@ -143,8 +185,9 @@ instructions initiales restent identiques après suppression des seuls fichiers 
 
 ## Performance
 
-Le benchmark `benchmarks/command-runtime.json` exécute cinq fois l’installation, `list`, `inspect`
-et la construction d’un dry-run dans des projets éphémères. Il rapporte la médiane et le p95 de
+Le benchmark `benchmarks/command-runtime.json` exécute cinq fois l’installation, `list`, `inspect`,
+la construction d’un dry-run de commande et celle d’un cycle global de skills dans des projets
+éphémères. Il rapporte la médiane et le p95 de
 chaque tâche :
 
 ```bash

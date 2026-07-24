@@ -1,4 +1,4 @@
-import { readFile, readdir, realpath, stat } from "node:fs/promises";
+import { lstat, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { extname, join, relative, sep } from "node:path";
 import type { ModelProvider } from "@ostack/core";
 import { executeStructuredContext } from "./execution.js";
@@ -227,7 +227,10 @@ async function readBounded(path: string): Promise<string> {
 }
 
 async function isDirectory(path: string): Promise<boolean> {
-  try { return (await stat(path)).isDirectory(); }
+  try {
+    const info = await lstat(path);
+    return info.isDirectory() && !info.isSymbolicLink();
+  }
   catch { return false; }
 }
 

@@ -59,3 +59,17 @@ test("out-of-scope target, forbidden target, expired window and unlisted categor
 test("a lookalike suffix does not slip through target matching", () => {
   assert.throws(() => assertOperationAuthorized(manifest(), { target: "evilapp-staging.internal", category: "input_validation", at: "2026-07-15T10:00:00Z" }), /not in the allowed scope/);
 });
+
+test("a forbidden category cannot also be allowed, and is refused at operation time (§5)", () => {
+  assert.ok(validateAuthorization(manifest({ forbiddenTestCategories: ["input_validation"] })).some((issue) => issue.message.includes("both allowed and forbidden")));
+  assert.throws(
+    () => assertOperationAuthorized(manifest({ allowedTestCategories: ["dependency_analysis", "input_validation"], forbiddenTestCategories: ["input_validation"] }), { target: "app-staging.internal", category: "input_validation", at: "2026-07-15T10:00:00Z" }),
+    /invalid/,
+  );
+});
+
+test("limits must be positive when present (§5)", () => {
+  assert.deepEqual(validateAuthorization(manifest({ limits: { maxRequestsPerSecond: 5, maxTestDurationMinutes: 60 } })), []);
+  assert.ok(validateAuthorization(manifest({ limits: { maxTestDurationMinutes: 0 } })).some((issue) => issue.field === "limits.maxTestDurationMinutes"));
+  assert.ok(validateAuthorization(manifest({ limits: { maxRequestsPerSecond: -1 } })).some((issue) => issue.field === "limits.maxRequestsPerSecond"));
+});

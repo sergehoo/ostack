@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "ostack-framework",
-  "version": "0.1.0",
-  "description": "Framework OStack installable dans un projet: commandes, agents, skill de méthode, standards, workflows et politiques. Consommé par Claude Code, Codex, Cursor ou un terminal.",
+  "version": "0.2.0",
+  "description": "Framework OStack installable dans un projet: commandes, agents, skills (méthode, amélioration continue, cyberdéfense), standards, workflows et politiques. Consommé par Claude Code, Codex, Cursor ou un terminal.",
   "targets": {
     "claude": {
       "description": "Claude Code — slash commands et subagents",
@@ -25,6 +25,11 @@
         {
           "from": "framework/skills",
           "to": ".claude/skills/ostack",
+          "glob": "*.md"
+        },
+        {
+          "from": "framework/skills",
+          "to": ".ostack/skills",
           "glob": "*.md"
         },
         {
@@ -76,6 +81,11 @@
         {
           "from": "framework/skills",
           "to": ".cursor/rules/ostack",
+          "glob": "*.md"
+        },
+        {
+          "from": "framework/skills",
+          "to": ".ostack/skills",
           "glob": "*.md"
         },
         {

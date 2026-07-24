@@ -37,7 +37,7 @@
         },
         {
           "path": "total",
-          "minimum": 13
+          "minimum": 14
         },
         {
           "path": "collisions.length",
@@ -83,6 +83,30 @@
         {
           "path": "context.command.name",
           "equals": "architecture-check"
+        }
+      ]
+    },
+    {
+      "id": "build-all-skills-context",
+      "category": "performance_regression",
+      "description": "Découvrir tous les skills projet et construire un cycle coordonné sans appel fournisseur",
+      "command": "run-all",
+      "args": [
+        "--input",
+        "Benchmark all skills"
+      ],
+      "checks": [
+        {
+          "path": "status",
+          "equals": "dry_run"
+        },
+        {
+          "path": "mode",
+          "equals": "all_skills"
+        },
+        {
+          "path": "totalSkills",
+          "minimum": 2
         }
       ]
     }

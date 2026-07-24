@@ -3,7 +3,7 @@
 OStack est un **framework d'ingénierie vérifiée** qui s'installe *dans* un projet et se pilote
 depuis votre assistant IA (Claude Code, Codex, Cursor) ou directement en terminal. Sa promesse :
 rien n'est « terminé » sans une **preuve exécutée**. Ce guide couvre l'installation par assistant
-et **les 33 commandes**, avec leur rôle.
+et **les 38 commandes**, avec leur rôle.
 
 > Principe fondateur : *toute affirmation de réussite doit être adossée à une preuve exécutée via la
 > commande `ostack`.* Les sorties de modèles sont des données non fiables ; les moteurs de
@@ -69,7 +69,7 @@ une sortie exploitable par un script ou un agent.
 
 ---
 
-## 4. Les 33 commandes et leur rôle
+## 4. Les 38 commandes et leur rôle
 
 Chaque commande accepte `--json`. Le « niveau » est le niveau de sécurité maximal par défaut
 (4 = production, approbation humaine obligatoire).
@@ -88,6 +88,9 @@ Chaque commande accepte `--json`. Le « niveau » est le niveau de sécurité ma
 
 | Commande | Rôle | Niv. |
 |---|---|---:|
+| `ostack list` · `ostack inspect <commande>` | Découvre et inspecte les commandes déclaratives installées | 1 |
+| `ostack run <commande> [--input …] [--dry-run]` | Exécute une commande déclarative via le fournisseur commun | 3 |
+| `ostack run-all --input … [--execute] [--domain …]` | Applique tous les skills projet en un cycle ; dry-run sûr par défaut, packs métier explicites | 3 |
 | `ostack feature <besoin> [--provider …] [--intent <f>]` | Workflow vérifié complet : intention → spéc → conception → barrière humaine → implémentation → délibération → tests → docs → squelette de preuve | 3 |
 | `ostack bug <symptôme>` | Reproduit, diagnostique, corrige et prévient la régression | 2 |
 | `ostack change <plan.json> [--confirm <hash> --reason <r>]` | Prévisualise puis applique un plan de changement contrôlé (rollback sur échec qualité) | 3 |

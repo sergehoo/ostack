@@ -4,9 +4,9 @@
 
 Contrats du noyau, CLI, sécurité quatre niveaux, audit local, événements, orchestrateur, workflow déclaratif, connaissance locale, catalogue d’agents, SDK plugins, API en lecture, dashboard et tests essentiels.
 
-## État actuel (2026-07-18)
+## État actuel (2026-07-23)
 
-29 packages, 33 commandes CLI, 159 tests verts, typecheck et lint propres, doctor sain (18 contrôles),
+30 packages, 38 commandes CLI, 178 tests verts, typecheck et lint propres, doctor sain (19 contrôles),
 validateurs d'évolution et de secrets au vert. `npm run self-prove` : `VERIFIED · APPROVE_WITH_OBSERVATIONS`,
 confiance 83. Publié sur [github.com/sergehoo/ostack](https://github.com/sergehoo/ostack).
 

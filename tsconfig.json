@@ -59,6 +59,9 @@
       "path": "packages/security-lab"
     },
     {
+      "path": "packages/security"
+    },
+    {
       "path": "packages/benchmark"
     },
     {

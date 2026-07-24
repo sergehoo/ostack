@@ -41,6 +41,10 @@ const AGENTS = [
 // Commandes phares, adossées à la CLI déterministe `ostack`.
 // [nom, description, invocation, consigne, argument-hint]
 const COMMANDS = [
+  ["run-all", "Appliquer tous les skills OStack sélectionnés au projet dans un cycle coordonné.",
+    'ostack run-all --input "<objectif>" [--domain <id>] [--include-domains] [--execute] [--provider <id>]',
+    "Prévisualise d'abord le contexte global sans appel fournisseur. Présente les skills sélectionnés et les packs disponibles. N'ajoute `--execute` que si l'utilisateur demande explicitement l'exécution IA ; sélectionne les packs métier avec `--domain <id>` ou `--include-domains`, jamais implicitement.",
+    "<objectif> [--domain <id>] [--include-domains] [--execute] [--provider <id>]"],
   ["intent-compile", "Compiler un besoin en invariants, propriétés Gherkin et preuves attendues.",
     'ostack intent-compile --from .ostack/tmp/intent-draft.json',
     "TU es le modèle: n'appelle pas de fournisseur externe. 1) Lis le schéma `.ostack/schemas/intent-draft.schema.json` et l'exemple `.ostack/examples/intent-draft.json`. 2) Rédige toi-même le brouillon d'intention pour `$ARGUMENTS` (invariants prohibition/permission/obligation/consistency, chaque règle de sécurité ou de permission implicite devient un invariant) et enregistre-le dans `.ostack/tmp/intent-draft.json`. 3) Lance `ostack intent-compile --from .ostack/tmp/intent-draft.json --json` — la compilation en propriétés Gherkin, contrôles et preuves attendues est DÉTERMINISTE. 4) Ces critères deviennent tes critères d'acceptation. N'utilise `--provider` que si un fournisseur est réellement configuré.",
@@ -92,7 +96,11 @@ const COMMANDS = [
   ["performance", "Établir une baseline et détecter les régressions de performance.",
     "ostack performance baseline --samples 10 ; ostack performance compare --gate",
     "Une régression p95 au-delà du budget bloque la release. Mesure sur l'application réellement lancée.",
-    "baseline | compare [--gate] [--samples N]"]
+    "baseline | compare [--gate] [--samples N]"],
+  ["security", "Auditer la sécurité de façon strictement défensive (Blue/Purple Team).",
+    'ostack security review ; ostack security threat-model "<système>" ; ostack security catalog [niveau]',
+    "Strictement défensif (skill `ostack-security-defense`). `review` est un audit local passif et non destructif ; un outil absent devient `not_run`, jamais `passed`. Un constat sans preuve est rejeté ; un constat haut/critique bloque la release. Un test ACTIF sur une cible réelle exige un manifeste `ostack security-lab` valide et autorisé — sinon, refuse. Ne produis jamais de charge offensive contre une cible réelle ou tierce.",
+    "review | dependencies | threat-model <système> | catalog [niveau] | evidence <fichier.json>"]
 ];
 
 function frontMatter(fields) {
@@ -110,14 +118,15 @@ async function main() {
     // Frontmatter conforme à Claude Code: `description` + `argument-hint`.
     // Le nom de la commande vient du chemin du fichier (`/ostack:<name>`),
     // pas du frontmatter — donc pas de champ `name`.
+    const closing = name === "run-all"
+      ? "Exécute la commande `ostack` correspondante en y intégrant `$ARGUMENTS`, ajoute `--json` pour parser le résultat, puis présente une synthèse opérationnelle. La sortie du fournisseur reste une proposition non fiable : seules les commandes déterministes et preuves réellement exécutées peuvent confirmer un résultat.\n"
+      : "Exécute la commande `ostack` correspondante en y intégrant `$ARGUMENTS`, ajoute `--json` pour parser le résultat, puis présente une synthèse opérationnelle. Cette commande est adossée aux moteurs déterministes d'OStack : son résultat est une preuve, pas une opinion.\n";
     const body = frontMatter({ description, "argument-hint": argumentHint })
       + `\n# /ostack:${name}\n\n${description}\n\n`
       + `Arguments reçus : \`$ARGUMENTS\`\n\n`
       + `## Ce que tu fais\n\n${guidance}\n\n`
       + `## Invocation de référence\n\n\`\`\`bash\n${invocation}\n\`\`\`\n\n`
-      + `Exécute la commande \`ostack\` correspondante en y intégrant \`$ARGUMENTS\`, ajoute \`--json\` `
-      + `pour parser le résultat, puis présente une synthèse opérationnelle. Cette commande est adossée `
-      + `aux moteurs déterministes d'OStack : son résultat est une preuve, pas une opinion.\n`;
+      + closing;
     await writeFile(join(root, "commands", `${name}.md`), body, "utf8");
   }
   console.log(`généré: ${AGENTS.length} agents, ${COMMANDS.length} commandes`);

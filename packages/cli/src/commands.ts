@@ -36,7 +36,7 @@ export const commands: Record<string, { description: string; handler: CommandHan
       : notYetAutomated("architecture", "architecture-review")(context)
   },
   design: { description: "Concevoir l’expérience et l’interface", handler: notYetAutomated("design", "design-review") },
-  security: { description: "Lancer l’audit de sécurité", handler: notYetAutomated("security", "security-audit") },
+  security: { description: "Audit de sécurité défensif (review, dependencies, threat-model, catalog, evidence)", handler: async (context) => (await import("./security.js")).runSecurity(context) },
   qa: { description: "Exécuter l’assurance qualité", handler: notYetAutomated("qa", "quality-gate") },
   document: { description: "Générer ou mettre à jour la documentation", handler: notYetAutomated("document", "documentation") },
   release: { description: "Préparer une livraison contrôlée", handler: notYetAutomated("release", "release") },

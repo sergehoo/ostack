@@ -25,7 +25,23 @@
     "expiresAt": { "type": "string", "format": "date-time" },
     "approvedBy": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 100 } },
     "emergencyContact": { "type": "string", "minLength": 3, "maxLength": 200 },
-    "maxRequestsPerSecond": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 }
+    "maxRequestsPerSecond": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+    "forbiddenTestCategories": {
+      "type": "array",
+      "maxItems": 9,
+      "items": {
+        "type": "string",
+        "enum": ["authentication_validation", "authorization_validation", "input_validation", "session_validation", "dependency_analysis", "configuration_review", "header_inspection", "business_abuse_simulation", "patch_validation"]
+      }
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "maxRequestsPerSecond": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "maxTestDurationMinutes": { "type": "number", "exclusiveMinimum": 0, "maximum": 1440 }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

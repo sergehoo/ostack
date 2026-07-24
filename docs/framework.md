@@ -12,9 +12,9 @@ n'est pas une application qu'on lance de l'extérieur.
 2. **Moteurs déterministes derrière la commande `ostack`** — la partie *vérifiable* : Evidence
    Pack, graphe de traçabilité, moteur de règles métier, performance, architecture. C'est ce qui
    fait qu'OStack repose sur des preuves, pas sur des prompts.
-3. **Runtime indépendant des assistants** — `ostack list`, `ostack inspect` et `ostack run`
-   découvrent la copie canonique `.ostack/commands`, chargent ses ressources et l’exécutent via le
-   port fournisseur commun.
+3. **Runtime indépendant des assistants** — `ostack list`, `ostack inspect`, `ostack run` et
+   `ostack run-all` découvrent les copies canoniques `.ostack/commands` et `.ostack/skills`,
+   chargent leur contexte et l’exécutent via le port fournisseur commun.
 
 Chaque définition de commande installée dit à l'assistant quel verbe `ostack` appeler et comment
 interpréter la preuve produite. Léger dans le projet, vérifiable derrière.
@@ -29,7 +29,7 @@ ostack install --assistant <claude|cursor|codex> [--force]
 Ce qui est déposé (cible `claude`) :
 
 ```text
-.claude/commands/ostack/*.md   13 commandes (intent-compile, prove, verify, challenge, graph,
+.claude/commands/ostack/*.md   14 commandes (run-all, intent-compile, prove, verify, challenge, graph,
                                observe, feature, domain-create, domain-check, root-cause,
                                decision, architecture-check, performance)
 .ostack/commands/*.md          copie canonique utilisée par le runtime indépendant
@@ -38,6 +38,7 @@ Ce qui est déposé (cible `claude`) :
                                security-engineer, adversarial-reviewer, evidence-verifier,
                                release-arbiter)
 .claude/skills/ostack/         skill ostack-method (la boucle et les règles non négociables)
+.ostack/skills/*.md            copie canonique des skills utilisée par `ostack run-all`
 .ostack/standards/*.json       profils technologiques
 .ostack/workflows/*.json       workflows déclaratifs
 .ostack/policies/*.json        sécurité 4 niveaux + frontières d'architecture
@@ -46,7 +47,7 @@ CLAUDE.md                      préambule OStack (ajouté une seule fois, idempo
 
 `cursor` installe sous `.cursor/rules/` et complète `.cursorrules` ; `codex` installe sous
 `.ostack/` et complète `AGENTS.md`. Toutes les cibles déposent aussi les commandes canoniques sous
-`.ostack/commands`. La réinstallation est idempotente (fichiers existants
+`.ostack/commands` et les skills canoniques sous `.ostack/skills`. La réinstallation est idempotente (fichiers existants
 préservés sauf `--force` ; préambule jamais dupliqué). Un `AGENTS.md`/`CLAUDE.md` existant est
 conservé, le préambule est simplement ajouté.
 

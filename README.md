@@ -98,6 +98,7 @@ Le dashboard est disponible sur `http://127.0.0.1:4320` et l’API sur `http://1
 - **Chaîne d'ingénierie vérifiée** : Intent-to-Proof Compiler (`intent-compile`), Knowledge Graph de traçabilité (`graph`), jumeau numérique avec détection de dérive (`drift`), délibération multi-agents à arbitrage par preuves (`challenge`), Model Mesh routé au coût par résultat vérifié, observation runtime (`observe`), Functional Testing Studio (matrice de permissions) et Authorized Security Lab défensif (`security-lab`). Voir [la chaîne vérifiée](docs/verified-engineering.md).
 - **Intelligence d'ingénierie** : boucle de vérification autonome à budgets durs, Performance Intelligence (baseline/régression), Architecture Intelligence (frontières vérifiées, appliquées à OStack lui-même), analyse de cause racine et mémoire des décisions. Voir [l'intelligence d'ingénierie](docs/engineering-intelligence.md).
 - **Universal Domain Intelligence** : ontologie métier universelle, Domain Packs sourcés et validés par experts, score de compréhension calculé, niveaux de maturité avec blocage des actions critiques, moteur de règles et tables de décision multisectoriels, garde de juridiction et analyse interdomaines (`domain`). OStack ne prétend connaître aucun métier : il sait en apprendre un et prouver ce qu'il a compris. Voir [l'intelligence métier universelle](docs/universal-domain.md).
+- **Cyberdéfense & tests de sécurité** : expertise défensive (Blue/Purple Team, DevSecOps, AppSec) — audit local passif, modèle de menaces STRIDE, catalogue défensif des risques web (détection + contrôles + test de non-régression), Security Evidence Pack et détection d'outils honnête (`security`). Strictement défensif ; tout test actif exige un manifeste d'autorisation borné (`security-lab`). Voir [la cyberdéfense](docs/cyber-defense.md).
 
 ## Structure
 
@@ -120,7 +121,7 @@ tests/         futurs tests transverses/E2E
 - **[Guide d'utilisation (Claude, ChatGPT, Codex, Cursor, terminal)](docs/guide-utilisation.md)** — installation par assistant et les 38 commandes
 - [Architecture](docs/architecture/README.md) · [Modèle de données](docs/data-model.md) · [Commandes](docs/commands.md) · [Feuille de route](docs/roadmap.md)
 - [Preuve logicielle](docs/evidence.md) · [Chaîne d'ingénierie vérifiée](docs/verified-engineering.md) · [Intelligence d'ingénierie](docs/engineering-intelligence.md)
-- [Intelligence métier universelle](docs/universal-domain.md) · [Apprentissage automatique](docs/learning.md) · [Évolution autonome Git-native](docs/evolution.md)
+- [Intelligence métier universelle](docs/universal-domain.md) · [Cyberdéfense & tests de sécurité](docs/cyber-defense.md) · [Apprentissage automatique](docs/learning.md) · [Évolution autonome Git-native](docs/evolution.md)
 - [Framework installable](docs/framework.md) · [Préparation production](docs/production-readiness.md) · [Fournisseurs](docs/providers.md) · [Isolation](docs/isolation.md)
 
 ## Licence

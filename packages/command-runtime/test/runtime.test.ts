@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -8,7 +8,10 @@ import {
   CommandTimeoutError,
   JsonLinesCommandRunJournal,
   buildExecutionContext,
+  buildAllSkillsContext,
   discoverCommands,
+  discoverSkills,
+  executeAllSkills,
   executeCommand,
   hashText,
   loadAssociatedResources,
@@ -173,6 +176,93 @@ test("journals hashes and sanitized metadata without persisting command input", 
   assert.doesNotMatch(raw, /token-sensitive-value/);
   assert.match(raw, /REDACTED/);
   assert.equal((await journal.list())[0]?.status, "failed");
+});
+
+test("discovers project skills by default and includes domain skills only when selected", async () => {
+  const root = await project();
+  await file(root, ".ostack/skills/method.md", `---
+name: project-method
+description: Project method
+---
+# Method
+Apply project verification.
+`);
+  await file(root, "domain-packs/finance/skills/money.md", `---
+name: finance-money
+description: Exact money
+status: extracted
+---
+# Money
+Use exact decimal values.
+`);
+
+  const projectOnly = await discoverSkills(root);
+  assert.deepEqual(projectOnly.skills.map((skill) => skill.name), ["project-method"]);
+  assert.deepEqual(projectOnly.availableDomains, ["finance"]);
+
+  const finance = await discoverSkills(root, { domains: ["finance"] });
+  assert.deepEqual(finance.skills.map((skill) => skill.name), ["finance-money", "project-method"]);
+  assert.equal(finance.skills[0]?.status, "extracted");
+  await assert.rejects(discoverSkills(root, { domains: ["healthcare"] }), /Unknown OStack skill domain/);
+});
+
+test("deduplicates identical skills and rejects conflicting definitions", async () => {
+  const root = await project();
+  const shared = `---
+name: shared-method
+description: Shared
+---
+# Shared
+Apply the same method.
+`;
+  await file(root, ".ostack/skills/shared.md", shared);
+  await file(root, ".ostack/domain-packs/finance/skills/shared.md", shared);
+  const catalog = await discoverSkills(root, { includeDomains: true });
+  assert.equal(catalog.skills.length, 1);
+  assert.equal(catalog.skills[0]?.scope, "project");
+  assert.equal(catalog.duplicates.length, 1);
+
+  await file(root, ".ostack/domain-packs/finance/skills/shared.md", shared.replace("same method", "different method"));
+  await assert.rejects(discoverSkills(root, { includeDomains: true }), /Conflicting OStack skill/);
+});
+
+test("does not discover a skill root that is a symbolic link outside the project", async () => {
+  const root = await project();
+  const external = await project();
+  await file(external, "skills/leak.md", "---\nname: leaked\n---\n# Leaked\nExternal content.");
+  await mkdir(join(root, ".ostack"), { recursive: true });
+  await symlink(join(external, "skills"), join(root, ".ostack/skills"));
+  const catalog = await discoverSkills(root);
+  assert.deepEqual(catalog.skills, []);
+});
+
+test("builds one all-skills context and performs one bounded provider call", async () => {
+  const root = await project();
+  await file(root, ".ostack/skills/one.md", "---\nname: one\n---\n# One\nFirst rule.");
+  await file(root, ".ostack/skills/two.md", "---\nname: two\n---\n# Two\nSecond rule.");
+  const catalog = await discoverSkills(root);
+  const context = buildAllSkillsContext({
+    runId: "all-1",
+    project: { id: "test", name: "Test", root: "." },
+    objective: "Review everything",
+    skills: catalog.skills,
+    now: "2026-01-01T00:00:00.000Z"
+  });
+  let calls = 0;
+  const provider: ModelProvider = {
+    id: "counting",
+    async isAvailable() { return true; },
+    async complete(request) {
+      calls += 1;
+      assert.equal(request.metadata?.ostackCommand, "run-all");
+      assert.match(request.messages[0]?.content ?? "", /"one"/);
+      assert.match(request.messages[0]?.content ?? "", /"two"/);
+      return { content: "covered", model: "test", provider: "counting" };
+    }
+  };
+  const result = await executeAllSkills(context, provider, 1_000);
+  assert.equal(result.response.content, "covered");
+  assert.equal(calls, 1);
 });
 
 async function project(): Promise<string> {

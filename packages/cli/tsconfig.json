@@ -54,6 +54,9 @@
       "path": "../security-lab"
     },
     {
+      "path": "../security"
+    },
+    {
       "path": "../mesh"
     },
     {

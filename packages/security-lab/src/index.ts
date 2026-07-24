@@ -31,6 +31,13 @@ export interface SecurityAuthorization {
   approvedBy: string[];
   emergencyContact: string;
   maxRequestsPerSecond?: number;
+  // §5 hardening: categories that are forbidden even if someone lists them as
+  // allowed (forbidden always wins), and hard test limits.
+  forbiddenTestCategories?: TestCategory[];
+  limits?: {
+    maxRequestsPerSecond?: number;
+    maxTestDurationMinutes?: number;
+  };
 }
 
 export interface AuthorizationIssue {
@@ -55,6 +62,14 @@ export function validateAuthorization(manifest: SecurityAuthorization): Authoriz
   for (const category of manifest.allowedTestCategories) {
     if (!TEST_CATEGORIES.includes(category)) issues.push({ field: "allowedTestCategories", message: `unknown category '${category}'` });
   }
+  const forbiddenCategories = new Set(manifest.forbiddenTestCategories ?? []);
+  for (const category of manifest.allowedTestCategories) {
+    if (forbiddenCategories.has(category)) issues.push({ field: "allowedTestCategories", message: `'${category}' is both allowed and forbidden; forbidden wins, remove it from allowed` });
+  }
+  const maxRps = manifest.limits?.maxRequestsPerSecond ?? manifest.maxRequestsPerSecond;
+  if (maxRps !== undefined && (!Number.isFinite(maxRps) || maxRps <= 0)) issues.push({ field: "limits.maxRequestsPerSecond", message: "must be a positive number" });
+  const maxDuration = manifest.limits?.maxTestDurationMinutes;
+  if (maxDuration !== undefined && (!Number.isFinite(maxDuration) || maxDuration <= 0)) issues.push({ field: "limits.maxTestDurationMinutes", message: "must be a positive number" });
 
   const start = Date.parse(manifest.startAt);
   const end = Date.parse(manifest.expiresAt);
@@ -98,6 +113,9 @@ export function assertOperationAuthorized(manifest: SecurityAuthorization, opera
   }
   if (!manifest.allowedTargets.some((item) => matchesTarget(target, normalizeTarget(item)))) {
     throw new Error(`Target '${operation.target}' is not in the allowed scope of ${manifest.authorizationId}`);
+  }
+  if ((manifest.forbiddenTestCategories ?? []).includes(operation.category)) {
+    throw new Error(`Test category '${operation.category}' is explicitly forbidden by ${manifest.authorizationId}`);
   }
   if (!manifest.allowedTestCategories.includes(operation.category)) {
     throw new Error(`Test category '${operation.category}' is not authorized by ${manifest.authorizationId}`);

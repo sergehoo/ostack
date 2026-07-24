@@ -8,13 +8,14 @@ Toutes les commandes acceptent `--json` pour l’automatisation. Les alias `/ost
 | `ostack list` | Découvre les commandes du projet, des domaines et des Domain Packs, avec leurs alias | 1 |
 | `ostack inspect <commande>` | Affiche le contrat, les instructions et les ressources associées d’une commande | 1 |
 | `ostack run <commande> [--input …] [--dry-run]` | Construit le contexte et exécute la commande via le fournisseur configuré | 3 |
+| `ostack run-all --input … [--execute] [--domain …]` | Orchestre tous les skills sélectionnés en un appel fournisseur unique ; dry-run par défaut | 3 |
 | `ostack discover` | Indexe et comprend projet et métier | 1 |
 | `ostack feature <besoin> [--provider …] [--intent <compiled.json>]` | Orchestre intention, spécification, conception, délibération, tests, docs et squelette de preuve | 3 |
 | `ostack bug <symptôme>` | Reproduit, diagnostique, corrige et prévient la régression | 2 |
 | `ostack audit` | Audit architecture, qualité, sécurité et opérations | 1 |
 | `ostack architecture` | Propose ADR, composants et compromis | 1 |
 | `ostack design` | Produit parcours, interface et contrôle accessibilité | 2 |
-| `ostack security` | Analyse menaces, dépendances, code et configuration | 1 |
+| `ostack security <review\|dependencies\|threat-model\|catalog\|evidence>` | Cyberdéfense (Blue/Purple Team) : audit local passif, modèle de menaces STRIDE, catalogue défensif des risques web, Evidence Pack ; test actif ⇒ `security-lab` | 1 |
 | `ostack qa` | Exécute stratégie et barrières qualité | 2 |
 | `ostack document` | Génère la documentation traçable | 2 |
 | `ostack release` | Prépare version, migration, déploiement et rollback | 3 |
@@ -57,6 +58,10 @@ Les commandes déclaratives de `.ostack/commands` et des packs sont détaillées
 [le guide du runtime indépendant](command-runtime.md). `ostack run --dry-run` valide et affiche le
 contexte sans appeler de fournisseur. `--input @fichier` est limité aux fichiers contenus dans le
 projet.
+
+`ostack run-all` charge tous les skills de `.ostack/skills`. Les Domain Packs restent exclus par
+défaut et s’ajoutent avec `--domain <id>` ou `--include-domains`. L’appel IA n’a lieu qu’avec
+`--execute`; les journaux ne conservent ni l’objectif ni la réponse en clair.
 
 `ostack discover` ne modifie rien par défaut. Ajoutez `--save` pour enregistrer le rapport dans `.ostack/discovery.json`; cette écriture locale est auditée.
 
